@@ -15,6 +15,7 @@ func TestIntersect(t *testing.T) {
 		{[][]interface{}{{1, 2, 3}, {2, 3, 4}}, []interface{}{2, 3}},
 		{[][]interface{}{{1, 2, 3}, {3, 4, 5}}, []interface{}{3}},
 		{[][]interface{}{{1, 2, 3}}, []interface{}{1, 2, 3}},
+		{[][]interface{}{{1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3}}, []interface{}{1, 2, 3}},
 		{[][]interface{}{{"something", 2, "hi"}}, []interface{}{"something", 2, "hi"}},
 		{[][]interface{}{}, []interface{}{}},
 	}
@@ -38,7 +39,7 @@ func TestContains(t *testing.T) {
 		expected     bool
 	}{
 		{[]interface{}{2, 3}, 1, false},
-		{[]interface{}{2, 3, 1, 5}, 1, true},
+		{[]interface{}{2, 3, 1, 5, 1, 1, 1}, 1, true},
 	}
 
 	for i, c := range cases {
