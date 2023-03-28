@@ -1,2 +1,3 @@
-# galgo
-Galgo: An extension to the standard library of go
+# Che - An Extension for the Go Standard Library
+
+WIP!
