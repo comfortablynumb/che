@@ -43,7 +43,7 @@ func TestContains(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		t.Run(fmt.Sprintf("TestIntersect_Case-%d", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("TestContains_Case-%d", i), func(t *testing.T) {
 			if res := cheslice.Contains(c.sliceToCheck, c.value); res != c.expected {
 				t.Errorf("Contains(%v, %v) == %v, expected %v", c.sliceToCheck, res, c.value, c.expected)
 			}

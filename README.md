@@ -1,3 +1,3 @@
 # Che - An Extension for the Go Standard Library
 
-WIP!
+![Tests](https://github.com/comfortablynumb/che/actions/workflows/test.yml/badge.svg)
