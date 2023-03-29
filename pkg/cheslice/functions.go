@@ -9,6 +9,10 @@ func Intersect[T comparable](slices ...[]T) []T {
 		return result
 	}
 
+	if len(slices) == 1 {
+		return append(result, slices[0]...)
+	}
+
 	m := make(map[T]struct{})
 
 	for _, element := range slices[0] {
@@ -26,10 +30,13 @@ func Intersect[T comparable](slices ...[]T) []T {
 			}
 		}
 
-		if exists {
-			result = append(result, element)
-			m[element] = struct{}{}
+		if !exists {
+			continue
 		}
+
+		result = append(result, element)
+
+		m[element] = struct{}{}
 	}
 
 	return result

@@ -2,22 +2,28 @@ package cheslice_test
 
 import (
 	"fmt"
-	"github.com/comfortablynumb/che/pkg/cheslice"
 	"reflect"
 	"testing"
+
+	"github.com/comfortablynumb/che/pkg/cheslice"
 )
 
 func TestIntersect(t *testing.T) {
 	cases := []struct {
-		input    [][]interface{}
-		expected []interface{}
+		input    [][]any
+		expected []any
 	}{
-		{[][]interface{}{{1, 2, 3}, {2, 3, 4}}, []interface{}{2, 3}},
-		{[][]interface{}{{1, 2, 3}, {3, 4, 5}}, []interface{}{3}},
-		{[][]interface{}{{1, 2, 3}}, []interface{}{1, 2, 3}},
-		{[][]interface{}{{1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3}}, []interface{}{1, 2, 3}},
-		{[][]interface{}{{"something", 2, "hi"}}, []interface{}{"something", 2, "hi"}},
-		{[][]interface{}{}, []interface{}{}},
+		{[][]any{{1, 2, 3}, {2, 3, 4}}, []any{2, 3}},
+		{[][]any{{1, 2, 3}, {3, 4, 5}}, []any{3}},
+		{[][]any{{1, 2, 3}}, []any{1, 2, 3}},
+		{[][]any{{1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3}}, []any{1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3}},
+		{[][]any{
+			{1, 2, 3, 1, 2, 3, 1, 100, 5, 6, 12, 2, 3, 1, 2, 3, 87},
+			{1, 2, 5, 6, 12, 3, 1, 2, 3, 1, 2, 107, 3, 1, 2, 3},
+		}, []any{1, 2, 3, 5, 6, 12}},
+		{[][]any{{"something", 2, "hi"}}, []any{"something", 2, "hi"}},
+		{[][]any{}, []any{}},
+		{[][]any{{1, 2, 3}}, []any{1, 2, 3}},
 	}
 
 	for i, c := range cases {
@@ -28,18 +34,17 @@ func TestIntersect(t *testing.T) {
 				t.Errorf("Intersect(%v) == %v, expected %v", c.input, result, c.expected)
 			}
 		})
-
 	}
 }
 
 func TestContains(t *testing.T) {
 	cases := []struct {
-		sliceToCheck []interface{}
-		value        interface{}
+		sliceToCheck []any
+		value        any
 		expected     bool
 	}{
-		{[]interface{}{2, 3}, 1, false},
-		{[]interface{}{2, 3, 1, 5, 1, 1, 1}, 1, true},
+		{[]any{2, 3}, 1, false},
+		{[]any{2, 3, 1, 5, 1, 1, 1}, 1, true},
 	}
 
 	for i, c := range cases {
@@ -48,6 +53,5 @@ func TestContains(t *testing.T) {
 				t.Errorf("Contains(%v, %v) == %v, expected %v", c.sliceToCheck, res, c.value, c.expected)
 			}
 		})
-
 	}
 }
