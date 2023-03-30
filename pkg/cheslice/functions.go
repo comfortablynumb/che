@@ -2,6 +2,25 @@ package cheslice
 
 // Static Functions
 
+func Unique[T comparable](slice []T) []T {
+	result := make([]T, 0)
+	m := make(map[T]struct{})
+
+	for _, element := range slice {
+		_, found := m[element]
+
+		if found {
+			continue
+		}
+
+		result = append(result, element)
+
+		m[element] = struct{}{}
+	}
+
+	return result
+}
+
 func Intersect[T comparable](slices ...[]T) []T {
 	result := make([]T, 0)
 

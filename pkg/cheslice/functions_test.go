@@ -2,11 +2,29 @@ package cheslice_test
 
 import (
 	"fmt"
-	"reflect"
+	"github.com/comfortablynumb/che/pkg/chetest"
 	"testing"
 
 	"github.com/comfortablynumb/che/pkg/cheslice"
 )
+
+func TestUnique(t *testing.T) {
+	cases := []struct {
+		input    []any
+		expected []any
+	}{
+		{[]any{1, 2, 3}, []any{1, 2, 3}},
+		{[]any{1, 1, 2, 1, 3, 2, 2, 3, 3, 2}, []any{1, 2, 3}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestUnique_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Unique(c.input)
+
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
 
 func TestIntersect(t *testing.T) {
 	cases := []struct {
@@ -30,9 +48,7 @@ func TestIntersect(t *testing.T) {
 		t.Run(fmt.Sprintf("TestIntersect_Case-%d", i), func(t *testing.T) {
 			result := cheslice.Intersect(c.input...)
 
-			if !reflect.DeepEqual(result, c.expected) {
-				t.Errorf("Intersect(%v) == %v, expected %v", c.input, result, c.expected)
-			}
+			chetest.RequireEqual(t, result, c.expected)
 		})
 	}
 }
@@ -49,9 +65,9 @@ func TestContains(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("TestContains_Case-%d", i), func(t *testing.T) {
-			if res := cheslice.Contains(c.sliceToCheck, c.value); res != c.expected {
-				t.Errorf("Contains(%v, %v) == %v, expected %v", c.sliceToCheck, res, c.value, c.expected)
-			}
+			result := cheslice.Contains(c.sliceToCheck, c.value)
+
+			chetest.RequireEqual(t, result, c.expected)
 		})
 	}
 }
