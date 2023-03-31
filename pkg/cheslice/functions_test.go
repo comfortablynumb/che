@@ -8,6 +8,76 @@ import (
 	"github.com/comfortablynumb/che/pkg/cheslice"
 )
 
+func TestFill(t *testing.T) {
+	cases := []struct {
+		count    uint
+		value    any
+		expected []any
+	}{
+		{0, nil, []any{}},
+		{1, nil, []any{nil}},
+		{5, 100, []any{100, 100, 100, 100, 100}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestFill_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Fill(c.count, c.value)
+
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestDiff(t *testing.T) {
+	cases := []struct {
+		input    [][]any
+		expected []any
+	}{
+		{[][]any{}, []any{}},
+		{[][]any{{1, 2, 3, 3, 4}}, []any{1, 2, 3, 3, 4}},
+		{[][]any{{1, 2, 3, 3, 4}, {4, 2, 3, 3, 2, 4, 1, 2, 5, 3, 7}}, []any{}},
+		{[][]any{{1, 2, 3, 3, 4}, {2, 3, 3, 2, 1, 2, 5, 3, 7}}, []any{4}},
+		{[][]any{{1, 2, 3, 3, 4}, {5, 6, 7, 32, 45, 234, 654, 3453342}}, []any{1, 2, 3, 4}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestDiff_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Diff(c.input...)
+
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestChunk(t *testing.T) {
+	cases := []struct {
+		input    []any
+		length   uint
+		expected [][]any
+	}{
+		{[]any{1, 2, 3}, 5, [][]any{{1, 2, 3}}},
+		{[]any{1, 2, 3}, 2, [][]any{{1, 2}, {3}}},
+		{[]any{1, 2, 3, 4, 3, 2, 1}, 2, [][]any{{1, 2}, {3, 4}, {3, 2}, {1}}},
+		{[]any{1, 2, 3, 4, 3, 2}, 2, [][]any{{1, 2}, {3, 4}, {3, 2}}},
+		{[]any{1, 2, 3, 4, 3, 2, 1}, 0, [][]any{}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestChunk_Case-%d", i), func(t *testing.T) {
+			inputCopy := make([]any, 0, len(c.input))
+			inputCopy = append(inputCopy, c.input...)
+
+			result := cheslice.Chunk(c.input, c.length)
+
+			chetest.RequireEqual(t, result, c.expected)
+
+			// Confirm the original slice was not modified
+
+			chetest.RequireEqual(t, c.input, inputCopy)
+		})
+	}
+}
+
 func TestUnique(t *testing.T) {
 	cases := []struct {
 		input    []any

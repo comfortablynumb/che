@@ -55,11 +55,7 @@ func TestRequireEqual(t *testing.T) {
 			opts := make([]chetest.TestOption, 0)
 
 			if c.message != "" {
-				opts = append(opts, chetest.WithMessage(c.message))
-
-				if len(c.messageArgs) > 0 {
-					opts = append(opts, chetest.WithMessageArgs(c.messageArgs...))
-				}
+				opts = append(opts, chetest.WithExtraMessage(c.message, c.messageArgs...))
 			}
 
 			chetest.RequireEqual(simpleTestingMock, c.arg1, c.arg2, opts...)

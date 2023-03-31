@@ -32,14 +32,9 @@ func RequireEqual[T any](t TestingInterface, input T, expected T, options ...Tes
 	}
 }
 
-func WithMessage(message string) TestOption {
+func WithExtraMessage(message string, messageArgs ...any) TestOption {
 	return func(testOptions *testOptions) {
 		testOptions.message = message
-	}
-}
-
-func WithMessageArgs(messageArgs ...any) TestOption {
-	return func(testOptions *testOptions) {
 		testOptions.messageArgs = messageArgs
 	}
 }
