@@ -8,6 +8,110 @@ import (
 	"github.com/comfortablynumb/che/pkg/cheslice"
 )
 
+func TestUnion(t *testing.T) {
+	cases := []struct {
+		input    [][]any
+		expected []any
+	}{
+		{
+			[][]any{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}},
+			[]any{1, 2, 3, 4, 5, 6, 7, 8, 9},
+		},
+		{
+			[][]any{{1, 2, 3}},
+			[]any{1, 2, 3},
+		},
+		{
+			[][]any{},
+			[]any{},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestUnion_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Union(c.input...)
+
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestMap(t *testing.T) {
+	cases := []struct {
+		input    []any
+		mapFunc  cheslice.MapFunc[any]
+		expected []any
+	}{
+		{
+			[]any{1, 2, 3},
+			func(element any) any {
+				return element.(int) + 2
+			},
+			[]any{3, 4, 5},
+		},
+		{
+			[]any{},
+			func(element any) any {
+				return element.(int) + 2
+			},
+			[]any{},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestMap_Case-%d", i), func(t *testing.T) {
+			cheslice.Map(c.input, c.mapFunc)
+
+			chetest.RequireEqual(t, c.input, c.expected)
+		})
+	}
+}
+
+func TestFilter(t *testing.T) {
+	cases := []struct {
+		input      []any
+		filterFunc cheslice.FilterFunc[any]
+		expected   []any
+	}{
+		{
+			[]any{1, 2, 3, 4, 5, 6},
+			func(element any) bool {
+				return (element.(int) % 2) == 0
+			},
+			[]any{2, 4, 6},
+		},
+		{
+			[]any{1, 2, 3, 4, 5, 6},
+			func(element any) bool {
+				return false
+			},
+			[]any{},
+		},
+		{
+			[]any{1, 2, 3, 4, 5, 6},
+			func(element any) bool {
+				return true
+			},
+			[]any{1, 2, 3, 4, 5, 6},
+		},
+		{
+			[]any{},
+			func(element any) bool {
+				return true
+			},
+			[]any{},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestFilter_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Filter(c.input, c.filterFunc)
+
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
 func TestFill(t *testing.T) {
 	cases := []struct {
 		count    uint

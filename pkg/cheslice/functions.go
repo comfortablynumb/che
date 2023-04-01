@@ -1,6 +1,54 @@
 package cheslice
 
+// Types
+
+type MapFunc[T any] func(element T) T
+
+type FilterFunc[T any] func(element T) bool
+
 // Static Functions
+
+func Union[T any](slices ...[]T) []T {
+	if len(slices) == 0 {
+		return []T{}
+	}
+
+	// Calculate capacity
+
+	capacity := 0
+
+	for _, slice := range slices {
+		capacity += len(slice)
+	}
+
+	result := make([]T, 0, capacity)
+
+	for _, slice := range slices {
+		for _, element := range slice {
+			result = append(result, element)
+		}
+	}
+
+	return result
+}
+
+func Map[T any](slice []T, mapFunc MapFunc[T]) {
+	for i, element := range slice {
+		slice[i] = mapFunc(element)
+	}
+}
+
+func Filter[T any](slice []T, filterFunc FilterFunc[T]) []T {
+	result := make([]T, 0)
+
+	for _, element := range slice {
+		if filterFunc(element) {
+			result = append(result, element)
+		}
+	}
+
+	return result
+}
 
 func Fill[T any](count uint, value T) []T {
 	result := make([]T, 0, count)
