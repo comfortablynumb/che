@@ -60,9 +60,17 @@ func TestMap(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("TestMap_Case-%d", i), func(t *testing.T) {
-			cheslice.Map(c.input, c.mapFunc)
+			inputCopy := make([]any, 0, len(c.input))
 
-			chetest.RequireEqual(t, c.input, c.expected)
+			inputCopy = append(inputCopy, c.input...)
+
+			result := cheslice.Map(c.input, c.mapFunc)
+
+			chetest.RequireEqual(t, result, c.expected)
+
+			// Make sure original slice is untouched
+
+			chetest.RequireEqual(t, inputCopy, c.input)
 		})
 	}
 }

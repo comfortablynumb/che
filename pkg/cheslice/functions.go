@@ -32,10 +32,14 @@ func Union[T any](slices ...[]T) []T {
 	return result
 }
 
-func Map[T any](slice []T, mapFunc MapFunc[T]) {
-	for i, element := range slice {
-		slice[i] = mapFunc(element)
+func Map[T any](slice []T, mapFunc MapFunc[T]) []T {
+	result := make([]T, 0, len(slice))
+
+	for _, element := range slice {
+		result = append(result, mapFunc(element))
 	}
+
+	return result
 }
 
 func Filter[T any](slice []T, filterFunc FilterFunc[T]) []T {
