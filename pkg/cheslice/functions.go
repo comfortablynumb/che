@@ -13,15 +13,7 @@ func Union[T any](slices ...[]T) []T {
 		return []T{}
 	}
 
-	// Calculate capacity
-
-	capacity := 0
-
-	for _, slice := range slices {
-		capacity += len(slice)
-	}
-
-	result := make([]T, 0, capacity)
+	result := make([]T, 0, Len(slices))
 
 	for _, slice := range slices {
 		result = append(result, slice...)
@@ -204,4 +196,14 @@ func Contains[T comparable](slice []T, element T) bool {
 	}
 
 	return false
+}
+
+func Len[T any](slices ...[]T) int {
+	result := 0
+
+	for _, slice := range slices {
+		result += len(slice)
+	}
+
+	return result
 }

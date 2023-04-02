@@ -253,3 +253,23 @@ func TestContains(t *testing.T) {
 		})
 	}
 }
+
+func TestLen(t *testing.T) {
+	cases := []struct {
+		slices   [][]any
+		expected int
+	}{
+		{[][]any{{1, 2, 3}, {}, {3, 4, 5}}, 6},
+		{[][]any{}, 0},
+		{[][]any{{}}, 0},
+		{nil, 0},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestLen_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Len(c.slices...)
+
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
