@@ -24,9 +24,7 @@ func Union[T any](slices ...[]T) []T {
 	result := make([]T, 0, capacity)
 
 	for _, slice := range slices {
-		for _, element := range slice {
-			result = append(result, element)
-		}
+		result = append(result, slice...)
 	}
 
 	return result
