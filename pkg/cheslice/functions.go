@@ -6,7 +6,7 @@ type MapFunc[T any] func(element T) T
 
 type FilterFunc[T any] func(element T) bool
 
-// Static Functions
+// Functions
 
 func Union[T any](slices ...[]T) []T {
 	if len(slices) == 0 {
