@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/comfortablynumb/che/pkg/chemap"
 	"github.com/comfortablynumb/che/pkg/chetest"
+	"sort"
 	"testing"
 )
 
@@ -39,6 +40,9 @@ func TestKeys(t *testing.T) {
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("TestKeys_Case-%d", i), func(t *testing.T) {
 			result := chemap.Keys(c.theMap)
+
+			sort.Strings(result)
+			sort.Strings(c.expectedKeys)
 
 			chetest.RequireEqual(t, result, c.expectedKeys)
 		})
