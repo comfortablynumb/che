@@ -36,6 +36,58 @@ func TestUnion(t *testing.T) {
 	}
 }
 
+func TestForEach(t *testing.T) {
+	type ForEachTestHelper struct {
+		processed  []int
+		iterations int
+	}
+
+	cases := []struct {
+		input    []int
+		expected *ForEachTestHelper
+	}{
+		{
+			[]int{1, 2, 3, 4},
+			&ForEachTestHelper{
+				processed:  []int{2, 4},
+				iterations: 4,
+			},
+		},
+		{
+			[]int{1, 2, 3, 4, 5, 0, 3, 1, 2, 3, 4},
+			&ForEachTestHelper{
+				processed:  []int{2, 4},
+				iterations: 5,
+			},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestForEach_Case-%d", i), func(t *testing.T) {
+			forEachTestHelper := &ForEachTestHelper{
+				processed:  []int{},
+				iterations: 0,
+			}
+
+			cheslice.ForEach(c.input, func(element int) bool {
+				if element == 0 {
+					return false
+				}
+
+				if (element % 2) == 0 {
+					forEachTestHelper.processed = append(forEachTestHelper.processed, element)
+				}
+
+				forEachTestHelper.iterations++
+
+				return true
+			})
+
+			chetest.RequireEqual(t, forEachTestHelper, c.expected)
+		})
+	}
+}
+
 func TestMap(t *testing.T) {
 	cases := []struct {
 		input    []any
@@ -237,17 +289,17 @@ func TestIntersect(t *testing.T) {
 
 func TestContains(t *testing.T) {
 	cases := []struct {
-		sliceToCheck []any
-		value        any
-		expected     bool
+		slicesToCheck [][]any
+		value         any
+		expected      bool
 	}{
-		{[]any{2, 3}, 1, false},
-		{[]any{2, 3, 1, 5, 1, 1, 1}, 1, true},
+		{[][]any{{2, 3}}, 1, false},
+		{[][]any{{4, 5, 6, 3}, {}, {2, 3, 1, 5, 1, 1, 1}}, 1, true},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("TestContains_Case-%d", i), func(t *testing.T) {
-			result := cheslice.Contains(c.sliceToCheck, c.value)
+			result := cheslice.Contains(c.value, c.slicesToCheck...)
 
 			chetest.RequireEqual(t, result, c.expected)
 		})

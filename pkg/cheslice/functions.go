@@ -2,6 +2,8 @@ package cheslice
 
 // Types
 
+type ForEachFunc[T any] func(element T) bool
+
 type MapFunc[T any] func(element T) T
 
 type FilterFunc[T any] func(element T) bool
@@ -20,6 +22,14 @@ func Union[T any](slices ...[]T) []T {
 	}
 
 	return result
+}
+
+func ForEach[T any](slice []T, forEachFunc ForEachFunc[T]) {
+	for _, element := range slice {
+		if !forEachFunc(element) {
+			return
+		}
+	}
 }
 
 func Map[T any](slice []T, mapFunc MapFunc[T]) []T {
@@ -76,17 +86,7 @@ func Diff[T comparable](slices ...[]T) []T {
 
 		checkedElements[element] = struct{}{}
 
-		include := true
-
-		for _, slice := range slices[1:] {
-			if Contains(slice, element) {
-				include = false
-
-				break
-			}
-		}
-
-		if include {
+		if !Contains(element, slices[1:]...) {
 			result = append(result, element)
 		}
 	}
@@ -166,17 +166,7 @@ func Intersect[T comparable](slices ...[]T) []T {
 			continue
 		}
 
-		exists := true
-
-		for _, slice := range slices[1:] {
-			if !Contains(slice, element) {
-				exists = false
-
-				break
-			}
-		}
-
-		if !exists {
+		if !Contains(element, slices[1:]...) {
 			continue
 		}
 
@@ -188,10 +178,12 @@ func Intersect[T comparable](slices ...[]T) []T {
 	return result
 }
 
-func Contains[T comparable](slice []T, element T) bool {
-	for _, e := range slice {
-		if e == element {
-			return true
+func Contains[T comparable](element T, slices ...[]T) bool {
+	for _, slice := range slices {
+		for _, e := range slice {
+			if e == element {
+				return true
+			}
 		}
 	}
 
