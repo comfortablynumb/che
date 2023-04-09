@@ -5,8 +5,9 @@
 ![Coverage Status](https://coveralls.io/repos/github/comfortablynumb/che/badge.svg?branch=main)
 ![License](https://img.shields.io/github/license/comfortablynumb/che)
 
-![](./docs/images/gopher.png)
-
+<p style="text-align: center;">
+  <img alt="Che!" src="https://github.com/comfortablynumb/che/raw/main/docs/images/gopher.png" />
+</p>
 ---
 
 **:construction_worker: IMPORTANT NOTE: :construction_worker: This is a work in progress. Stay tuned!**
