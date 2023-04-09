@@ -24,6 +24,8 @@ type testOptions struct {
 
 // Functions
 
+// RequireEqual Fails the test if "input" and "expected" are not deeply equal. Returns true otherwise. You can also
+// pass an extra message to show using the "WithExtraMessage" option.
 func RequireEqual[T any](t TestingInterface, input T, expected T, options ...TestOption) {
 	if !reflect.DeepEqual(input, expected) {
 		extraMessage := prepareExtraMessage(options...)

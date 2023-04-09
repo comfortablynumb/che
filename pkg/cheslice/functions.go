@@ -10,6 +10,7 @@ type FilterFunc[T any] func(element T) bool
 
 // Functions
 
+// Union Returns a new slice with all the elements found in the given slices. It preserves repeated elements.
 func Union[T any](slices ...[]T) []T {
 	if len(slices) == 0 {
 		return []T{}
@@ -24,6 +25,7 @@ func Union[T any](slices ...[]T) []T {
 	return result
 }
 
+// ForEach Executes the given "forEachFunc" on each of the elements of the received slice.
 func ForEach[T any](slice []T, forEachFunc ForEachFunc[T]) {
 	for _, element := range slice {
 		if !forEachFunc(element) {
@@ -32,6 +34,7 @@ func ForEach[T any](slice []T, forEachFunc ForEachFunc[T]) {
 	}
 }
 
+// Map Returns a new slice with the result of applying "mapFunc" to each of the elements from the given slice.
 func Map[T any](slice []T, mapFunc MapFunc[T]) []T {
 	result := make([]T, 0, len(slice))
 
@@ -42,6 +45,7 @@ func Map[T any](slice []T, mapFunc MapFunc[T]) []T {
 	return result
 }
 
+// Filter Returns a new slice with the elements for which "filterFunc" returned true.
 func Filter[T any](slice []T, filterFunc FilterFunc[T]) []T {
 	result := make([]T, 0)
 
@@ -54,6 +58,8 @@ func Filter[T any](slice []T, filterFunc FilterFunc[T]) []T {
 	return result
 }
 
+// Fill Creates a new slice with the amount of elements determined by "count". Each element will have the value
+// determined by "value".
 func Fill[T any](count uint, value T) []T {
 	result := make([]T, 0, count)
 
@@ -64,6 +70,8 @@ func Fill[T any](count uint, value T) []T {
 	return result
 }
 
+// Diff Returns a new slice with all the elements found in the first slice that are NOT present in the rest of the
+// slices. If no slice is received, it returns an empty slice. If one slice is received, it returns a copy of it.
 func Diff[T comparable](slices ...[]T) []T {
 	result := make([]T, 0)
 
@@ -86,7 +94,7 @@ func Diff[T comparable](slices ...[]T) []T {
 
 		checkedElements[element] = struct{}{}
 
-		if !Contains(element, slices[1:]...) {
+		if !Exists(element, slices[1:]...) {
 			result = append(result, element)
 		}
 	}
@@ -94,6 +102,8 @@ func Diff[T comparable](slices ...[]T) []T {
 	return result
 }
 
+// Chunk Returns a new slice consisting of chunks with the length determined by "length". If slice is empty, then this
+// function returns an empty slice.
 func Chunk[T any](slice []T, length uint) [][]T {
 	result := make([][]T, 0)
 
@@ -129,6 +139,7 @@ func Chunk[T any](slice []T, length uint) [][]T {
 	return result
 }
 
+// Unique Returns a new slice with all the distinct values found in the given slice.
 func Unique[T comparable](slice []T) []T {
 	result := make([]T, 0)
 	m := make(map[T]struct{})
@@ -148,6 +159,9 @@ func Unique[T comparable](slice []T) []T {
 	return result
 }
 
+// Intersect Returns a new slice with the elements that are found in ALL the given slices. If no slice is given, then
+// it returns an empty slice. If only ne slice is given, it rethrns a copy of the same slice (including repeated
+// elements).
 func Intersect[T comparable](slices ...[]T) []T {
 	result := make([]T, 0)
 
@@ -166,7 +180,7 @@ func Intersect[T comparable](slices ...[]T) []T {
 			continue
 		}
 
-		if !Contains(element, slices[1:]...) {
+		if !Exists(element, slices[1:]...) {
 			continue
 		}
 
@@ -178,7 +192,8 @@ func Intersect[T comparable](slices ...[]T) []T {
 	return result
 }
 
-func Contains[T comparable](element T, slices ...[]T) bool {
+// Exists Returns true if the given element is present in ANY of the given slices. Returns false otherwise.
+func Exists[T comparable](element T, slices ...[]T) bool {
 	for _, slice := range slices {
 		for _, e := range slice {
 			if e == element {
@@ -190,6 +205,7 @@ func Contains[T comparable](element T, slices ...[]T) bool {
 	return false
 }
 
+// Len Returns the sum of the lengths of all the given slices.
 func Len[T any](slices ...[]T) int {
 	result := 0
 

@@ -5,4 +5,28 @@
 ![Coverage Status](https://coveralls.io/repos/github/comfortablynumb/che/badge.svg?branch=main)
 ![License](https://img.shields.io/github/license/comfortablynumb/che)
 
-This is a work in progress. Stay tuned!
+![](./docs/images/gopher.png)
+
+**:construction_worker: IMPORTANT NOTE: :construction_worker: This is a work in progress. Stay tuned!**
+
+---
+
+This library aims to meet the following requirements:
+
+* It must have all the functions and data structures that we use in our everyday tasks, but that are not present in Golang's standard library: Slices and maps related functions, data structures like sets, etc.
+* It must provide higher level APIs for functionalities like file handling, networking, etc.
+* It must have **zero dependencies**.
+
+The following is a list of specific desired features that I want this library to have in the coming months:
+
+- [x] Slices related functions: Unique, Diff, Intersect, etc.
+- [ ] Maps related functions: Keys, etc.
+- [ ] Data structures: Sets, etc.
+- [ ] Structs that allow to use the slices and maps functions with a fluid interface.
+- [ ] File handling related functions.
+- [ ] Networking related functions.
+- [ ] More to come!
+
+## Credits
+
+* [gopherize.me](https://gopherize.me/): For the excellent gopher image!

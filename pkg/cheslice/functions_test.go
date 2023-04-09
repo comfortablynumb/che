@@ -287,7 +287,7 @@ func TestIntersect(t *testing.T) {
 	}
 }
 
-func TestContains(t *testing.T) {
+func TestExists(t *testing.T) {
 	cases := []struct {
 		slicesToCheck [][]any
 		value         any
@@ -298,8 +298,8 @@ func TestContains(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		t.Run(fmt.Sprintf("TestContains_Case-%d", i), func(t *testing.T) {
-			result := cheslice.Contains(c.value, c.slicesToCheck...)
+		t.Run(fmt.Sprintf("TestExists_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Exists(c.value, c.slicesToCheck...)
 
 			chetest.RequireEqual(t, result, c.expected)
 		})
