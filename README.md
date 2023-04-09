@@ -7,9 +7,13 @@
 
 ![](./docs/images/gopher.png)
 
+---
+
 **:construction_worker: IMPORTANT NOTE: :construction_worker: This is a work in progress. Stay tuned!**
 
 ---
+
+## Introduction
 
 This library aims to meet the following requirements:
 
