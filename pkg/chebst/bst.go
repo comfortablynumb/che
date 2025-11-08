@@ -1,7 +1,5 @@
 package chebst
 
-import "golang.org/x/exp/constraints"
-
 // Node represents a single node in a binary search tree
 type Node[T any] struct {
 	Value T
@@ -29,16 +27,61 @@ func New[T any](compare CompareFunc[T]) *BST[T] {
 	}
 }
 
-// NewOrdered creates a new Binary Search Tree for ordered types (int, float, string, etc.)
-func NewOrdered[T constraints.Ordered]() *BST[T] {
-	return New(func(a, b T) int {
-		if a < b {
-			return -1
-		} else if a > b {
-			return 1
-		}
-		return 0
-	})
+// NewInt creates a new Binary Search Tree for int values
+func NewInt() *BST[int] {
+	return New(compareInt)
+}
+
+// NewInt64 creates a new Binary Search Tree for int64 values
+func NewInt64() *BST[int64] {
+	return New(compareInt64)
+}
+
+// NewFloat64 creates a new Binary Search Tree for float64 values
+func NewFloat64() *BST[float64] {
+	return New(compareFloat64)
+}
+
+// NewString creates a new Binary Search Tree for string values
+func NewString() *BST[string] {
+	return New(compareString)
+}
+
+// Comparison functions for common types
+func compareInt(a, b int) int {
+	if a < b {
+		return -1
+	} else if a > b {
+		return 1
+	}
+	return 0
+}
+
+func compareInt64(a, b int64) int {
+	if a < b {
+		return -1
+	} else if a > b {
+		return 1
+	}
+	return 0
+}
+
+func compareFloat64(a, b float64) int {
+	if a < b {
+		return -1
+	} else if a > b {
+		return 1
+	}
+	return 0
+}
+
+func compareString(a, b string) int {
+	if a < b {
+		return -1
+	} else if a > b {
+		return 1
+	}
+	return 0
 }
 
 // Insert adds a value to the tree - O(log n) average, O(n) worst case
