@@ -37,7 +37,7 @@ func TestClient_Get(t *testing.T) {
 		chetest.RequireEqual(t, r.URL.Path, "/test")
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(testResponse{Message: "success", Code: 200})
+		_ = json.NewEncoder(w).Encode(testResponse{Message: "success", Code: 200})
 	}))
 	defer server.Close()
 
@@ -55,11 +55,11 @@ func TestClient_Post(t *testing.T) {
 		chetest.RequireEqual(t, r.Header.Get("Content-Type"), "application/json")
 
 		var body testResponse
-		json.NewDecoder(r.Body).Decode(&body)
+		_ = json.NewDecoder(r.Body).Decode(&body)
 		chetest.RequireEqual(t, body.Message, "test")
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(testResponse{Message: "created", Code: 201})
+		_ = json.NewEncoder(w).Encode(testResponse{Message: "created", Code: 201})
 	}))
 	defer server.Close()
 
@@ -150,7 +150,7 @@ func TestClient_WithDefaultHeaders(t *testing.T) {
 func TestClient_AutoUnmarshalSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(testResponse{Message: "success", Code: 200})
+		_ = json.NewEncoder(w).Encode(testResponse{Message: "success", Code: 200})
 	}))
 	defer server.Close()
 
@@ -168,7 +168,7 @@ func TestClient_AutoUnmarshalSuccess(t *testing.T) {
 func TestClient_AutoUnmarshalError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(testError{Error: "bad request", Details: "invalid input"})
+		_ = json.NewEncoder(w).Encode(testError{Error: "bad request", Details: "invalid input"})
 	}))
 	defer server.Close()
 
@@ -200,7 +200,7 @@ func TestClient_Timeout(t *testing.T) {
 func TestResponse_String(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("test response"))
+		_, _ = w.Write([]byte("test response"))
 	}))
 	defer server.Close()
 
@@ -279,7 +279,7 @@ func TestBuilder_WithMultipleHeaders(t *testing.T) {
 func TestClient_WithJSONBody(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body testResponse
-		json.NewDecoder(r.Body).Decode(&body)
+		_ = json.NewDecoder(r.Body).Decode(&body)
 
 		chetest.RequireEqual(t, body.Message, "test message")
 		chetest.RequireEqual(t, body.Code, 123)
