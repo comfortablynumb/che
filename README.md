@@ -77,6 +77,13 @@ This library aims to meet the following requirements:
 - Merge (combine maps)
 - Pick, Omit (select/exclude keys)
 
+#### `chehttp` - HTTP Client
+- Ergonomic HTTP client with builder pattern
+- Automatic JSON marshalling/unmarshalling
+- Request options for headers, timeouts, body
+- Interface-based design for easy mocking
+- Convenient response methods
+
 #### `chetest` - Testing Helpers
 - RequireEqual with custom messages
 - Assertion utilities for tests
@@ -88,9 +95,9 @@ This library aims to meet the following requirements:
 - [x] Data structures: HashSet, OrderedSet, Queue, Stack, Multimap
 - [x] Linked data structures: LinkedList, DoublyLinkedList
 - [x] Tree structures: Binary Search Tree
+- [x] HTTP client: Ergonomic HTTP client with builder pattern
 - [ ] More data structures: LRU Cache, Trie, AVL Tree, etc.
 - [ ] File handling functions
-- [ ] Networking functions
 
 ## Quick Examples
 
@@ -184,6 +191,32 @@ inverted := chemap.Invert(m) // map[1:"a" 2:"b"]
 
 // MapValues
 doubled := chemap.MapValues(m, func(v int) int { return v * 2 }) // map[a:2 b:4]
+```
+
+### HTTP Client
+```go
+// Create client with builder
+client := chehttp.NewBuilder().
+    WithBaseURL("https://api.example.com").
+    WithDefaultHeader("Authorization", "Bearer token").
+    WithDefaultTimeout(30 * time.Second).
+    Build()
+
+// Make requests with automatic JSON handling
+type User struct {
+    ID   int    `json:"id"`
+    Name string `json:"name"`
+}
+
+var user User
+resp, err := client.Get("/users/1", chehttp.WithSuccess(&user))
+if resp.IsSuccess() {
+    fmt.Println("User:", user.Name)
+}
+
+// POST with JSON body
+newUser := User{Name: "John"}
+resp, err = client.Post("/users", chehttp.WithJSONBody(newUser))
 ```
 
 ## Credits
