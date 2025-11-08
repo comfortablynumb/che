@@ -1,6 +1,10 @@
-# cheset - Generic HashSet Implementation
+# cheset - Generic Set Implementations
 
-A production-ready, generic HashSet implementation for Go with zero dependencies and 100% test coverage.
+Production-ready, generic Set implementations for Go with zero dependencies and 100% test coverage.
+
+This package provides two set implementations:
+- **HashSet** - Unordered set with O(1) operations
+- **OrderedSet** - Insertion-ordered set with O(1) lookups
 
 ## Features
 
@@ -324,6 +328,190 @@ mu.RLock()
 exists := set.Contains(1)
 mu.RUnlock()
 ```
+
+---
+
+## OrderedSet
+
+OrderedSet maintains insertion order while providing O(1) average-case lookups. It's perfect when you need both set semantics and predictable iteration order.
+
+### Creating Ordered Sets
+
+```go
+// Create empty ordered set
+set := cheset.NewOrdered[string]()
+
+// Create with initial capacity
+set := cheset.NewOrderedWithCapacity[string](100)
+
+// Create from slice (preserves first occurrence order)
+set := cheset.NewOrderedFromSlice([]string{"a", "b", "c"})
+```
+
+### Order-Specific Operations
+
+OrderedSet provides all the same operations as HashSet, plus order-specific methods:
+
+```go
+set := cheset.NewOrderedFromSlice([]int{10, 20, 30, 40})
+
+// Access by index
+element := set.GetAt(0) // 10
+element = set.GetAt(2)  // 30
+
+// Find index of element
+idx := set.Index(20)    // 1
+idx = set.Index(99)     // -1 (not found)
+
+// Get first and last
+first, ok := set.First()  // 10, true
+last, ok := set.Last()    // 40, true
+
+// Pop first or last
+first, ok := set.PopFirst() // Removes and returns 10
+last, ok := set.PopLast()   // Removes and returns 40
+```
+
+### Insertion Order is Preserved
+
+```go
+set := cheset.NewOrdered[int]()
+set.Add(3)
+set.Add(1)
+set.Add(2)
+
+// Iteration is always in insertion order
+for i := 0; i < set.Size(); i++ {
+    fmt.Println(set.GetAt(i)) // Prints: 3, 1, 2
+}
+
+// ToSlice returns elements in insertion order
+slice := set.ToSlice() // [3, 1, 2]
+```
+
+### Set Operations Preserve Order
+
+```go
+set1 := cheset.NewOrderedFromSlice([]int{1, 2, 3})
+set2 := cheset.NewOrderedFromSlice([]int{3, 4, 5})
+
+// Union: elements from set1 first, then new elements from set2
+union := set1.Union(set2)  // [1, 2, 3, 4, 5]
+
+// Intersect: order from set1
+intersection := set1.Intersect(set2)  // [3]
+
+// Diff: order from set1
+diff := set1.Diff(set2)  // [1, 2]
+
+// SymmetricDiff: set1 elements first, then set2
+symDiff := set1.SymmetricDiff(set2)  // [1, 2, 4, 5]
+```
+
+### Equality is Order-Sensitive
+
+```go
+set1 := cheset.NewOrderedFromSlice([]int{1, 2, 3})
+set2 := cheset.NewOrderedFromSlice([]int{1, 2, 3})
+set3 := cheset.NewOrderedFromSlice([]int{3, 2, 1})
+
+set1.Equal(set2) // true - same elements, same order
+set1.Equal(set3) // false - same elements, different order
+```
+
+### Filtering Preserves Order
+
+```go
+set := cheset.NewOrderedFromSlice([]int{1, 2, 3, 4, 5, 6})
+
+evens := set.Filter(func(item int) bool {
+    return item%2 == 0
+})
+// evens contains [2, 4, 6] in that order
+```
+
+### Use Cases for OrderedSet
+
+**1. Recent Items / History**
+```go
+// Track recently viewed items
+recent := cheset.NewOrdered[string]()
+recent.Add("page1")
+recent.Add("page2")
+recent.Add("page3")
+
+// Access in order of first visit
+for i := 0; i < recent.Size(); i++ {
+    fmt.Println(recent.GetAt(i))
+}
+```
+
+**2. Ordered Unique List**
+```go
+// Remove duplicates while preserving order
+items := []string{"apple", "banana", "apple", "cherry", "banana"}
+unique := cheset.NewOrderedFromSlice(items)
+// unique contains ["apple", "banana", "cherry"] in that order
+```
+
+**3. Queue with Deduplication**
+```go
+// Task queue that prevents duplicate tasks
+queue := cheset.NewOrdered[string]()
+queue.Add("task1")
+queue.Add("task2")
+queue.Add("task1") // Ignored - already in queue
+
+// Process in order
+for !queue.IsEmpty() {
+    task, _ := queue.PopFirst()
+    processTask(task)
+}
+```
+
+**4. Maintaining Display Order**
+```go
+// UI elements that must appear in specific order
+elements := cheset.NewOrdered[string]()
+elements.Add("header")
+elements.Add("content")
+elements.Add("footer")
+
+// Render in exact order
+for i := 0; i < elements.Size(); i++ {
+    render(elements.GetAt(i))
+}
+```
+
+### Performance Characteristics
+
+| Operation | Average Case | Worst Case | Notes |
+|-----------|--------------|------------|-------|
+| Add | O(1) | O(n) | |
+| Remove | O(n) | O(n) | Must update indices |
+| Contains | O(1) | O(n) | |
+| GetAt | O(1) | O(1) | Direct array access |
+| Index | O(1) | O(n) | Map lookup |
+| First/Last | O(1) | O(1) | Direct array access |
+| PopFirst | O(n) | O(n) | Must shift elements |
+| PopLast | O(1) | O(n) | Just remove from end |
+
+**Important**: `Remove()` and `PopFirst()` are O(n) because they require updating the indices of all subsequent elements. If you need frequent removals from arbitrary positions, consider using a different data structure.
+
+### When to Use OrderedSet vs HashSet
+
+**Use OrderedSet when:**
+- You need predictable iteration order
+- You need to access elements by position
+- You're implementing a queue with deduplication
+- Order matters for your application logic
+- You need to maintain display/rendering order
+
+**Use HashSet when:**
+- Order doesn't matter
+- You need slightly better performance for Add/Remove
+- You're doing pure set operations (union, intersection, etc.)
+- Memory efficiency is critical (OrderedSet uses more memory)
 
 ## Comparison with Alternatives
 
