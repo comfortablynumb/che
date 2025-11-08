@@ -8,12 +8,6 @@
   <img alt="Che!" width="450" height="482" src="https://github.com/comfortablynumb/che/raw/main/docs/images/gopher.png" />
 </p>
 
----
-
-**:construction_worker: IMPORTANT NOTE: :construction_worker: This is a work in progress. Stay tuned!**
-
----
-
 ## Introduction
 
 This library aims to meet the following requirements:
@@ -79,10 +73,42 @@ This library aims to meet the following requirements:
 
 #### `chehttp` - HTTP Client
 - Ergonomic HTTP client with builder pattern
-- Automatic JSON marshalling/unmarshalling
+- Automatic JSON marshalling/unmarshalling for requests and responses
 - Request options for headers, timeouts, body
+- Connection timeout vs request timeout distinction
+- Request lifecycle hooks (pre-request, post-request, on-success, on-error, on-complete)
+- Retry configuration with exponential, linear, and fixed backoff strategies
+- Context-aware methods for cancellation support
+- Response body streaming
 - Interface-based design for easy mocking
-- Convenient response methods
+
+#### `chestring` - String Utilities
+- Case conversions: ToCamelCase, ToPascalCase, ToSnakeCase, ToKebabCase, ToScreamingSnakeCase
+- Transformations: Capitalize, Uncapitalize, Reverse
+- Validation: IsEmpty, IsBlank, IsNotEmpty, IsNotBlank
+- Truncation: Truncate by length or words
+- Search: ContainsAny, ContainsAll
+- Other utilities: Repeat, RemoveWhitespace, DefaultIfEmpty, DefaultIfBlank, SplitAndTrim
+
+#### `cheenv` - Environment Variables
+- Type-safe environment variable access (string, int, int64, float64, bool, duration)
+- Default values and Must* variants for required config
+- List support with custom separators (GetStringList, GetIntList)
+- Flexible boolean parsing (true/false, yes/no, on/off, 1/0, y/n, t/f)
+- Batch operations: GetAll, GetWithPrefix
+- Variable management: Set, Unset, Has
+
+#### `chectx` - Context Utilities
+- Type-safe context key/value pairs using generics
+- Eliminates type assertions and key collisions
+- WithValue, Value, MustValue, GetOrDefault functions
+
+#### `chesignal` - Graceful Shutdown
+- Signal handling utilities for graceful application shutdown
+- Configurable signals and timeout
+- Ordered shutdown function execution
+- Lifecycle callbacks (OnShutdownStart, OnShutdownComplete, OnShutdownTimeout)
+- Context-aware shutdown
 
 #### `chetest` - Testing Helpers
 - RequireEqual with custom messages
@@ -95,7 +121,11 @@ This library aims to meet the following requirements:
 - [x] Data structures: HashSet, OrderedSet, Queue, Stack, Multimap
 - [x] Linked data structures: LinkedList, DoublyLinkedList
 - [x] Tree structures: Binary Search Tree
-- [x] HTTP client: Ergonomic HTTP client with builder pattern
+- [x] HTTP client: Ergonomic client with hooks, retries, and context support
+- [x] String utilities: Case conversions, validation, truncation, search
+- [x] Environment utilities: Type-safe env var access with defaults
+- [x] Context utilities: Type-safe context values with generics
+- [x] Signal utilities: Graceful shutdown handling
 - [ ] More data structures: LRU Cache, Trie, AVL Tree, etc.
 - [ ] File handling functions
 
@@ -199,7 +229,19 @@ doubled := chemap.MapValues(m, func(v int) int { return v * 2 }) // map[a:2 b:4]
 client := chehttp.NewBuilder().
     WithBaseURL("https://api.example.com").
     WithDefaultHeader("Authorization", "Bearer token").
-    WithDefaultTimeout(30 * time.Second).
+    WithRequestTimeout(30 * time.Second).
+    WithConnectionTimeout(10 * time.Second).
+    WithRetry(&chehttp.RetryConfig{
+        MaxRetries: 3,
+        BackoffStrategy: &chehttp.ExponentialBackoff{
+            BaseDelay: 1 * time.Second,
+            Multiplier: 2.0,
+        },
+    }).
+    WithPreRequestHook(func(ctx *chehttp.HookContext) error {
+        log.Printf("Request: %s %s", ctx.Method, ctx.URL)
+        return nil
+    }).
     Build()
 
 // Make requests with automatic JSON handling
@@ -214,9 +256,89 @@ if resp.IsSuccess() {
     fmt.Println("User:", user.Name)
 }
 
-// POST with JSON body
+// POST with JSON body and context
+ctx := context.WithTimeout(context.Background(), 5*time.Second)
 newUser := User{Name: "John"}
-resp, err = client.Post("/users", chehttp.WithJSONBody(newUser))
+resp, err = client.PostWithCtx(ctx, "/users", chehttp.WithJSONBody(newUser))
+```
+
+### String Utilities
+```go
+// Case conversions
+chestring.ToCamelCase("hello_world")      // "helloWorld"
+chestring.ToSnakeCase("HelloWorld")       // "hello_world"
+chestring.ToKebabCase("helloWorld")       // "hello-world"
+
+// Validation
+chestring.IsBlank("  ")                   // true
+chestring.IsNotEmpty("hello")             // true
+
+// Truncation
+chestring.Truncate("Hello World", 5)      // "Hello..."
+chestring.TruncateWords("one two three", 2) // "one two..."
+
+// Search
+chestring.ContainsAny("hello", "x", "e")  // true
+```
+
+### Environment Variables
+```go
+// String values with defaults
+dbHost := cheenv.Get("DB_HOST", "localhost")
+dbName := cheenv.MustGet("DB_NAME") // panics if not set
+
+// Typed values
+port := cheenv.GetInt("PORT", 8080)
+debug := cheenv.GetBool("DEBUG", false) // accepts: true, yes, on, 1, etc.
+timeout := cheenv.GetDuration("TIMEOUT", 30*time.Second)
+
+// Lists
+hosts := cheenv.GetStringList("ALLOWED_HOSTS", ",", []string{"localhost"})
+ports := cheenv.GetIntList("PORTS", ",", []int{8080})
+
+// Batch operations
+appConfig := cheenv.GetWithPrefix("APP_") // Get all APP_* variables
+```
+
+### Context Utilities
+```go
+// Type-safe context values
+userIDKey := chectx.Key[int]("userID")
+requestIDKey := chectx.Key[string]("requestID")
+
+// Set values
+ctx := chectx.WithValue(context.Background(), userIDKey, 42)
+ctx = chectx.WithValue(ctx, requestIDKey, "abc123")
+
+// Get values (type-safe, no assertions needed)
+userID, ok := chectx.Value(ctx, userIDKey)       // userID is int
+requestID := chectx.MustValue(ctx, requestIDKey) // panics if not found
+```
+
+### Graceful Shutdown
+```go
+// Define shutdown functions
+shutdownFuncs := []chesignal.ShutdownFunc{
+    func(ctx context.Context) error {
+        log.Println("Closing database connection...")
+        return db.Close()
+    },
+    func(ctx context.Context) error {
+        log.Println("Shutting down HTTP server...")
+        return server.Shutdown(ctx)
+    },
+}
+
+// Wait for shutdown signal (SIGINT, SIGTERM)
+config := &chesignal.Config{
+    Signals: []os.Signal{os.Interrupt, syscall.SIGTERM},
+    Timeout: 30 * time.Second,
+    OnShutdownStart: func() {
+        log.Println("Shutdown initiated...")
+    },
+}
+
+err := chesignal.WaitForShutdown(config, shutdownFuncs...)
 ```
 
 ## Credits
