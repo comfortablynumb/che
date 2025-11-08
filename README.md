@@ -2,7 +2,6 @@
 
 ![Go Report Card](https://goreportcard.com/badge/github.com/comfortablynumb/che)
 ![Build Status](https://github.com/comfortablynumb/che/actions/workflows/build.yml/badge.svg)
-![Coverage Status](https://coveralls.io/repos/github/comfortablynumb/che/badge.svg?branch=main)
 ![License](https://img.shields.io/github/license/comfortablynumb/che)
 
 <p align="center">
@@ -19,20 +18,84 @@
 
 This library aims to meet the following requirements:
 
-* It must have all the functions and data structures that we use in our everyday tasks, but that are not present in Golang's standard library: Slices and maps related functions, data structures like sets, etc.
-* It must provide higher level APIs for functionalities like file handling, networking, etc.
-* It must have **zero dependencies**.
-* It must have **100% coverage**.
+* It must have all the functions and data structures that we use in our everyday tasks, but that are not present in Golang's standard library
+* It must have **zero dependencies**
+* It must have **high test coverage**
+* It must be **fully generic** using Go 1.20+ generics
 
-The following is a list of specific desired features that I want this library to have in the coming months:
+## Packages
 
-- [x] Slices related functions: Unique, Diff, Intersect, etc.
-- [ ] Maps related functions: Keys, etc.
-- [ ] Data structures: Sets, etc.
-- [ ] Structs that allow to use the slices and maps functions with a fluid interface.
-- [ ] File handling related functions.
-- [ ] Networking related functions.
-- [ ] More to come!
+### Data Structures
+
+#### `cheset` - Set Implementations
+- **HashSet** - Unordered set with O(1) operations
+- **OrderedSet** - Insertion-ordered set with O(1) lookups
+
+#### `chequeue` - Queue (FIFO)
+- Generic Queue implementation with O(1) amortized operations
+- Circular buffer for efficient memory usage
+
+#### `chestack` - Stack (LIFO)
+- Generic Stack implementation with O(1) amortized operations
+- Simple slice-based implementation
+
+### Utilities
+
+#### `cheslice` - Slice Functions
+- Union, Diff, Intersect, Unique
+- Map, Filter, ForEach
+- Chunk, Fill, and more
+
+#### `chemap` - Map Functions
+- Keys extraction
+- More utilities coming soon
+
+#### `chetest` - Testing Helpers
+- RequireEqual with custom messages
+- Assertion utilities for tests
+
+## Features Status
+
+- [x] Slice functions: Unique, Diff, Intersect, Map, Filter, etc.
+- [x] Map functions: Keys extraction
+- [x] Data structures: HashSet, OrderedSet, Queue, Stack
+- [ ] More data structures: Multimap, LRU Cache, Trie, etc.
+- [ ] File handling functions
+- [ ] Networking functions
+
+## Quick Examples
+
+### HashSet
+```go
+set := cheset.New[int]()
+set.Add(1)
+set.Add(2)
+set.Contains(1) // true
+```
+
+### OrderedSet
+```go
+set := cheset.NewOrdered[string]()
+set.Add("first")
+set.Add("second")
+set.GetAt(0) // "first" - maintains order
+```
+
+### Queue
+```go
+queue := chequeue.New[int]()
+queue.Enqueue(1)
+queue.Enqueue(2)
+value, _ := queue.Dequeue() // 1 (FIFO)
+```
+
+### Stack
+```go
+stack := chestack.New[int]()
+stack.Push(1)
+stack.Push(2)
+value, _ := stack.Pop() // 2 (LIFO)
+```
 
 ## Credits
 
