@@ -2,6 +2,7 @@ package chehttp
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -296,4 +297,199 @@ func TestClient_WithJSONBody(t *testing.T) {
 
 	chetest.RequireEqual(t, err, nil)
 	chetest.RequireEqual(t, resp.StatusCode(), http.StatusOK)
+}
+
+func TestClient_PreRequestHook(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	var hookCalled bool
+	var hookMethod string
+	var hookURL string
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithPreRequestHook(func(ctx *HookContext) error {
+			hookCalled = true
+			hookMethod = ctx.Method
+			hookURL = ctx.URL
+			return nil
+		}).
+		Build()
+
+	resp, err := client.Get("/test")
+	chetest.RequireEqual(t, err, nil)
+	chetest.RequireEqual(t, resp.StatusCode(), http.StatusOK)
+	chetest.RequireEqual(t, hookCalled, true)
+	chetest.RequireEqual(t, hookMethod, http.MethodGet)
+	chetest.RequireEqual(t, hookURL, server.URL+"/test")
+}
+
+func TestClient_PostRequestHook(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	var hookCalled bool
+	var hookStatusCode int
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithPostRequestHook(func(ctx *HookContext) {
+			hookCalled = true
+			hookStatusCode = ctx.StatusCode
+		}).
+		Build()
+
+	resp, err := client.Get("/test")
+	chetest.RequireEqual(t, err, nil)
+	chetest.RequireEqual(t, resp.StatusCode(), http.StatusOK)
+	chetest.RequireEqual(t, hookCalled, true)
+	chetest.RequireEqual(t, hookStatusCode, http.StatusOK)
+}
+
+func TestClient_SuccessHook(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	var successCalled bool
+	var errorCalled bool
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithSuccessHook(func(ctx *HookContext) {
+			successCalled = true
+		}).
+		WithErrorHook(func(ctx *HookContext) {
+			errorCalled = true
+		}).
+		Build()
+
+	resp, err := client.Get("/test")
+	chetest.RequireEqual(t, err, nil)
+	chetest.RequireEqual(t, resp.StatusCode(), http.StatusOK)
+	chetest.RequireEqual(t, successCalled, true)
+	chetest.RequireEqual(t, errorCalled, false)
+}
+
+func TestClient_ErrorHook(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer server.Close()
+
+	var successCalled bool
+	var errorCalled bool
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithSuccessHook(func(ctx *HookContext) {
+			successCalled = true
+		}).
+		WithErrorHook(func(ctx *HookContext) {
+			errorCalled = true
+		}).
+		Build()
+
+	resp, err := client.Get("/test")
+	chetest.RequireEqual(t, err, nil)
+	chetest.RequireEqual(t, resp.StatusCode(), http.StatusBadRequest)
+	chetest.RequireEqual(t, successCalled, false)
+	chetest.RequireEqual(t, errorCalled, true)
+}
+
+func TestClient_CompleteHook(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	var completeCalled bool
+	var duration time.Duration
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithCompleteHook(func(ctx *HookContext) {
+			completeCalled = true
+			duration = ctx.Duration
+		}).
+		Build()
+
+	resp, err := client.Get("/test")
+	chetest.RequireEqual(t, err, nil)
+	chetest.RequireEqual(t, resp.StatusCode(), http.StatusOK)
+	chetest.RequireEqual(t, completeCalled, true)
+	chetest.RequireEqual(t, duration > 0, true)
+}
+
+func TestClient_PreRequestHookError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	var completeCalled bool
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithPreRequestHook(func(ctx *HookContext) error {
+			return fmt.Errorf("hook error")
+		}).
+		WithCompleteHook(func(ctx *HookContext) {
+			completeCalled = true
+		}).
+		Build()
+
+	_, err := client.Get("/test")
+	chetest.RequireEqual(t, err != nil, true)
+	chetest.RequireEqual(t, completeCalled, true)
+}
+
+func TestClient_RequestTimeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithRequestTimeout(10 * time.Millisecond).
+		Build()
+
+	_, err := client.Get("/test")
+	chetest.RequireEqual(t, err != nil, true)
+}
+
+func TestClient_MultipleHooks(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	var hook1Called bool
+	var hook2Called bool
+
+	client := NewBuilder().
+		WithBaseURL(server.URL).
+		WithPreRequestHook(func(ctx *HookContext) error {
+			hook1Called = true
+			return nil
+		}).
+		WithPreRequestHook(func(ctx *HookContext) error {
+			hook2Called = true
+			return nil
+		}).
+		Build()
+
+	resp, err := client.Get("/test")
+	chetest.RequireEqual(t, err, nil)
+	chetest.RequireEqual(t, resp.StatusCode(), http.StatusOK)
+	chetest.RequireEqual(t, hook1Called, true)
+	chetest.RequireEqual(t, hook2Called, true)
 }

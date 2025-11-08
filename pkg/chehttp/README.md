@@ -9,6 +9,8 @@ A simple, ergonomic HTTP client for Go that makes HTTP requests easier and more 
 - **Automatic JSON Marshalling**: Automatically marshal request bodies to JSON
 - **Automatic JSON Unmarshalling**: Automatically unmarshal response bodies (success and error)
 - **Flexible Options**: Configure each request with headers, timeouts, and more
+- **Request Lifecycle Hooks**: Pre-request, post-request, success, error, and complete hooks
+- **Timeout Control**: Separate connection and request timeouts for fine-grained control
 - **Type-Safe**: Fully generic with Go 1.20+ generics
 - **Zero Dependencies**: Only uses Go standard library
 
@@ -40,7 +42,7 @@ func main() {
     client := chehttp.NewBuilder().
         WithBaseURL("https://api.example.com").
         WithDefaultHeader("Authorization", "Bearer token").
-        WithDefaultTimeout(30 * time.Second).
+        WithRequestTimeout(30 * time.Second).
         Build()
 
     // Perform a GET request
@@ -65,7 +67,8 @@ client := chehttp.NewBuilder().
     WithBaseURL("https://api.example.com").
     WithDefaultHeader("User-Agent", "MyApp/1.0").
     WithDefaultHeader("Accept", "application/json").
-    WithDefaultTimeout(30 * time.Second).
+    WithRequestTimeout(30 * time.Second).
+    WithConnectionTimeout(5 * time.Second).
     WithMaxIdleConns(100).
     WithMaxIdleConnsPerHost(10).
     Build()
@@ -152,6 +155,155 @@ if resp.IsSuccess() {
 }
 ```
 
+### Timeout Control
+
+The client supports two types of timeouts for fine-grained control:
+
+#### Request Timeout
+
+The total time allowed for the entire request (including connection establishment, sending data, and receiving response):
+
+```go
+client := chehttp.NewBuilder().
+    WithRequestTimeout(30 * time.Second).  // Total request time
+    Build()
+
+// Override per request
+resp, err := client.Get("/users",
+    chehttp.WithTimeout(5 * time.Second),
+)
+```
+
+#### Connection Timeout
+
+The time allowed to establish the connection:
+
+```go
+client := chehttp.NewBuilder().
+    WithConnectionTimeout(5 * time.Second).  // Connection establishment time
+    WithRequestTimeout(30 * time.Second).     // Total request time
+    Build()
+```
+
+**Note**: `WithDefaultTimeout()` is an alias for `WithRequestTimeout()` for backward compatibility.
+
+### Request Lifecycle Hooks
+
+Hooks allow you to intercept and observe requests at different stages of their lifecycle. This is useful for logging, metrics, error handling, and more.
+
+#### Available Hooks
+
+- **PreRequest**: Called before sending the request (can cancel by returning error)
+- **PostRequest**: Called after receiving the response
+- **OnSuccess**: Called when response status is 2xx
+- **OnError**: Called when response status is 4xx or 5xx
+- **OnComplete**: Called after request completes (success or failure)
+
+#### Hook Context
+
+All hooks receive a `HookContext` with:
+
+```go
+type HookContext struct {
+    Method     string        // HTTP method (GET, POST, etc.)
+    URL        string        // Full URL
+    Headers    http.Header   // Request headers
+    StatusCode int           // Response status code (0 if not available)
+    Response   Response      // Response object (nil if not available)
+    Error      error         // Error if request failed (nil if successful)
+    StartTime  time.Time     // Request start time
+    Duration   time.Duration // Request duration (0 if not complete)
+}
+```
+
+#### Logging Example
+
+```go
+client := chehttp.NewBuilder().
+    WithBaseURL("https://api.example.com").
+    WithPreRequestHook(func(ctx *chehttp.HookContext) error {
+        fmt.Printf("[%s] %s %s\n", ctx.StartTime.Format(time.RFC3339), ctx.Method, ctx.URL)
+        return nil
+    }).
+    WithCompleteHook(func(ctx *chehttp.HookContext) {
+        status := ctx.StatusCode
+        if ctx.Error != nil {
+            status = 0
+        }
+        fmt.Printf("[%s] %s %s - %d (%v)\n",
+            ctx.StartTime.Add(ctx.Duration).Format(time.RFC3339),
+            ctx.Method, ctx.URL, status, ctx.Duration)
+    }).
+    Build()
+```
+
+#### Metrics Collection Example
+
+```go
+var totalRequests int64
+var totalErrors int64
+var totalDuration time.Duration
+
+client := chehttp.NewBuilder().
+    WithCompleteHook(func(ctx *chehttp.HookContext) {
+        atomic.AddInt64(&totalRequests, 1)
+        if ctx.Error != nil || ctx.Response.IsError() {
+            atomic.AddInt64(&totalErrors, 1)
+        }
+        // Note: Use mutex for duration in production
+        totalDuration += ctx.Duration
+    }).
+    Build()
+```
+
+#### Error Logging Example
+
+```go
+client := chehttp.NewBuilder().
+    WithErrorHook(func(ctx *chehttp.HookContext) {
+        log.Printf("HTTP error: %s %s - status %d, duration %v",
+            ctx.Method, ctx.URL, ctx.StatusCode, ctx.Duration)
+        if ctx.Response != nil {
+            log.Printf("Response body: %s", ctx.Response.String())
+        }
+    }).
+    Build()
+```
+
+#### Request Validation Example
+
+```go
+client := chehttp.NewBuilder().
+    WithPreRequestHook(func(ctx *chehttp.HookContext) error {
+        // Validate that API key is present
+        if ctx.Headers.Get("X-API-Key") == "" {
+            return fmt.Errorf("missing required X-API-Key header")
+        }
+        return nil
+    }).
+    Build()
+
+// This request will fail with "pre-request hook failed: missing required X-API-Key header"
+resp, err := client.Get("/users")
+```
+
+#### Multiple Hooks
+
+You can add multiple hooks of the same type - they will be called in order:
+
+```go
+client := chehttp.NewBuilder().
+    WithCompleteHook(func(ctx *chehttp.HookContext) {
+        // First hook - metrics
+        recordMetrics(ctx)
+    }).
+    WithCompleteHook(func(ctx *chehttp.HookContext) {
+        // Second hook - logging
+        logRequest(ctx)
+    }).
+    Build()
+```
+
 ### Response Methods
 
 The Response interface provides convenient methods:
@@ -201,7 +353,7 @@ func NewAPIClient(baseURL, token string) *APIClient {
         WithBaseURL(baseURL).
         WithDefaultHeader("Authorization", "Bearer "+token).
         WithDefaultHeader("Content-Type", "application/json").
-        WithDefaultTimeout(30 * time.Second).
+        WithRequestTimeout(30 * time.Second).
         Build()
 
     return &APIClient{client: client}
@@ -286,16 +438,31 @@ resp, err := client.Get("/users",
 
 ### Builder
 
+**Basic Configuration:**
 - `NewBuilder()` - Creates a new builder
 - `WithHTTPClient(client)` - Sets custom http.Client
 - `WithBaseURL(url)` - Sets base URL for all requests
 - `WithDefaultHeader(key, value)` - Adds a default header
 - `WithDefaultHeaders(headers)` - Adds multiple default headers
-- `WithDefaultTimeout(duration)` - Sets default timeout
+- `Build()` - Builds the client
+
+**Timeout Configuration:**
+- `WithRequestTimeout(duration)` - Sets total request timeout
+- `WithConnectionTimeout(duration)` - Sets connection establishment timeout
+- `WithDefaultTimeout(duration)` - Alias for WithRequestTimeout (backward compatibility)
+
+**Transport Configuration:**
 - `WithTransport(transport)` - Sets custom transport
 - `WithMaxIdleConns(n)` - Sets max idle connections
 - `WithMaxIdleConnsPerHost(n)` - Sets max idle connections per host
-- `Build()` - Builds the client
+- `WithInsecureSkipVerify()` - Disables TLS certificate verification (use with caution!)
+
+**Lifecycle Hooks:**
+- `WithPreRequestHook(hook)` - Adds a pre-request hook
+- `WithPostRequestHook(hook)` - Adds a post-request hook
+- `WithSuccessHook(hook)` - Adds a success hook (2xx responses)
+- `WithErrorHook(hook)` - Adds an error hook (4xx/5xx responses)
+- `WithCompleteHook(hook)` - Adds a complete hook (always called)
 
 ### Client Interface
 

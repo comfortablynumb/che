@@ -31,10 +31,12 @@ type Client interface {
 
 // client implements the Client interface
 type client struct {
-	httpClient     *http.Client
-	baseURL        string
-	defaultHeaders map[string]string
-	defaultTimeout time.Duration
+	httpClient        *http.Client
+	baseURL           string
+	defaultHeaders    map[string]string
+	requestTimeout    time.Duration
+	connectionTimeout time.Duration
+	hooks             *Hooks
 }
 
 // Get performs an HTTP GET request
@@ -64,6 +66,8 @@ func (c *client) Delete(url string, opts ...RequestOption) (Response, error) {
 
 // Do performs an HTTP request with the given method
 func (c *client) Do(method, url string, opts ...RequestOption) (Response, error) {
+	startTime := time.Now()
+
 	// Apply request configuration
 	config := &requestConfig{
 		headers: make(map[string]string),
@@ -98,8 +102,31 @@ func (c *client) Do(method, url string, opts ...RequestOption) (Response, error)
 		req.Header.Set(k, v)
 	}
 
-	// Set timeout
-	timeout := c.defaultTimeout
+	// Create hook context
+	hookCtx := &HookContext{
+		Method:    method,
+		URL:       fullURL,
+		Headers:   req.Header,
+		StartTime: startTime,
+	}
+
+	// Call pre-request hooks
+	if c.hooks != nil {
+		for _, hook := range c.hooks.PreRequest {
+			if err := hook(hookCtx); err != nil {
+				hookCtx.Error = err
+				hookCtx.Duration = time.Since(startTime)
+				// Call complete hooks even on pre-request error
+				for _, completeHook := range c.hooks.OnComplete {
+					completeHook(hookCtx)
+				}
+				return nil, fmt.Errorf("pre-request hook failed: %w", err)
+			}
+		}
+	}
+
+	// Set request timeout (total time for the request)
+	timeout := c.requestTimeout
 	if config.timeout != nil {
 		timeout = *config.timeout
 	}
@@ -115,13 +142,62 @@ func (c *client) Do(method, url string, opts ...RequestOption) (Response, error)
 	// Perform request
 	httpResp, err := c.httpClient.Do(req)
 	if err != nil {
+		hookCtx.Error = err
+		hookCtx.Duration = time.Since(startTime)
+
+		// Call complete hooks on error
+		if c.hooks != nil {
+			for _, completeHook := range c.hooks.OnComplete {
+				completeHook(hookCtx)
+			}
+		}
+
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 
 	// Create response
 	resp, err := newResponse(httpResp)
 	if err != nil {
+		hookCtx.Error = err
+		hookCtx.Duration = time.Since(startTime)
+		hookCtx.StatusCode = httpResp.StatusCode
+
+		// Call complete hooks on error
+		if c.hooks != nil {
+			for _, completeHook := range c.hooks.OnComplete {
+				completeHook(hookCtx)
+			}
+		}
+
 		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	// Update hook context with response info
+	hookCtx.StatusCode = resp.StatusCode()
+	hookCtx.Response = resp
+	hookCtx.Duration = time.Since(startTime)
+
+	// Call post-request hooks
+	if c.hooks != nil {
+		for _, hook := range c.hooks.PostRequest {
+			hook(hookCtx)
+		}
+
+		// Call success/error hooks
+		if resp.IsSuccess() {
+			for _, hook := range c.hooks.OnSuccess {
+				hook(hookCtx)
+			}
+		} else if resp.IsError() {
+			for _, hook := range c.hooks.OnError {
+				hook(hookCtx)
+			}
+		}
+
+		// Call complete hooks
+		for _, completeHook := range c.hooks.OnComplete {
+			completeHook(hookCtx)
+		}
 	}
 
 	// Auto-unmarshal if configured

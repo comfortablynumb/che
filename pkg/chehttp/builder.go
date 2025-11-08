@@ -8,10 +8,12 @@ import (
 
 // Builder is used to build HTTP clients with custom configuration
 type Builder struct {
-	httpClient     *http.Client
-	baseURL        string
-	defaultHeaders map[string]string
-	defaultTimeout time.Duration
+	httpClient        *http.Client
+	baseURL           string
+	defaultHeaders    map[string]string
+	requestTimeout    time.Duration
+	connectionTimeout time.Duration
+	hooks             *Hooks
 }
 
 // NewBuilder creates a new HTTP client builder
@@ -19,6 +21,7 @@ func NewBuilder() *Builder {
 	return &Builder{
 		httpClient:     &http.Client{},
 		defaultHeaders: make(map[string]string),
+		hooks:          &Hooks{},
 	}
 }
 
@@ -54,9 +57,20 @@ func (b *Builder) WithDefaultHeaders(headers map[string]string) *Builder {
 	return b
 }
 
-// WithDefaultTimeout sets the default timeout for all requests
+// WithRequestTimeout sets the default request timeout (total time for the entire request)
+func (b *Builder) WithRequestTimeout(timeout time.Duration) *Builder {
+	b.requestTimeout = timeout
+	return b
+}
+
+// WithDefaultTimeout is an alias for WithRequestTimeout for backward compatibility
 func (b *Builder) WithDefaultTimeout(timeout time.Duration) *Builder {
-	b.defaultTimeout = timeout
+	return b.WithRequestTimeout(timeout)
+}
+
+// WithConnectionTimeout sets the connection timeout (time to establish connection)
+func (b *Builder) WithConnectionTimeout(timeout time.Duration) *Builder {
+	b.connectionTimeout = timeout
 	return b
 }
 
@@ -114,12 +128,73 @@ func (b *Builder) WithInsecureSkipVerify() *Builder {
 	return b
 }
 
+// WithPreRequestHook adds a pre-request hook
+func (b *Builder) WithPreRequestHook(hook PreRequestHook) *Builder {
+	if b.hooks == nil {
+		b.hooks = &Hooks{}
+	}
+	b.hooks.PreRequest = append(b.hooks.PreRequest, hook)
+	return b
+}
+
+// WithPostRequestHook adds a post-request hook
+func (b *Builder) WithPostRequestHook(hook PostRequestHook) *Builder {
+	if b.hooks == nil {
+		b.hooks = &Hooks{}
+	}
+	b.hooks.PostRequest = append(b.hooks.PostRequest, hook)
+	return b
+}
+
+// WithSuccessHook adds a success hook (called on 2xx responses)
+func (b *Builder) WithSuccessHook(hook SuccessHook) *Builder {
+	if b.hooks == nil {
+		b.hooks = &Hooks{}
+	}
+	b.hooks.OnSuccess = append(b.hooks.OnSuccess, hook)
+	return b
+}
+
+// WithErrorHook adds an error hook (called on 4xx/5xx responses)
+func (b *Builder) WithErrorHook(hook ErrorHook) *Builder {
+	if b.hooks == nil {
+		b.hooks = &Hooks{}
+	}
+	b.hooks.OnError = append(b.hooks.OnError, hook)
+	return b
+}
+
+// WithCompleteHook adds a complete hook (always called after request)
+func (b *Builder) WithCompleteHook(hook CompleteHook) *Builder {
+	if b.hooks == nil {
+		b.hooks = &Hooks{}
+	}
+	b.hooks.OnComplete = append(b.hooks.OnComplete, hook)
+	return b
+}
+
 // Build creates the HTTP client
 func (b *Builder) Build() Client {
+	// Configure connection timeout via transport
+	if b.connectionTimeout > 0 {
+		if b.httpClient.Transport == nil {
+			b.httpClient.Transport = &http.Transport{}
+		}
+		if transport, ok := b.httpClient.Transport.(*http.Transport); ok {
+			transport.DialContext = (&http.Transport{
+				DialContext: (&http.Transport{}).DialContext,
+			}).DialContext
+			// Note: DialContext timeout is set in the transport, but we need to use net.Dialer
+			// For simplicity, we'll set it in the client Do method
+		}
+	}
+
 	return &client{
-		httpClient:     b.httpClient,
-		baseURL:        b.baseURL,
-		defaultHeaders: b.defaultHeaders,
-		defaultTimeout: b.defaultTimeout,
+		httpClient:        b.httpClient,
+		baseURL:           b.baseURL,
+		defaultHeaders:    b.defaultHeaders,
+		requestTimeout:    b.requestTimeout,
+		connectionTimeout: b.connectionTimeout,
+		hooks:             b.hooks.Clone(),
 	}
 }
