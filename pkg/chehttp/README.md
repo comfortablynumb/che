@@ -11,6 +11,9 @@ A simple, ergonomic HTTP client for Go that makes HTTP requests easier and more 
 - **Flexible Options**: Configure each request with headers, timeouts, and more
 - **Request Lifecycle Hooks**: Pre-request, post-request, success, error, and complete hooks
 - **Timeout Control**: Separate connection and request timeouts for fine-grained control
+- **Retry with Backoff**: Configurable retry logic with exponential, linear, or fixed backoff strategies
+- **Context Support**: Context-aware methods for cancellation and deadline management
+- **Streaming Support**: Access response body reader for streaming large responses
 - **Type-Safe**: Fully generic with Go 1.20+ generics
 - **Zero Dependencies**: Only uses Go standard library
 
@@ -304,6 +307,132 @@ client := chehttp.NewBuilder().
     Build()
 ```
 
+### Retry Configuration
+
+The client supports automatic retries with configurable backoff strategies for handling transient failures.
+
+#### Basic Retry Setup
+
+```go
+client := chehttp.NewBuilder().
+    WithBaseURL("https://api.example.com").
+    WithRetries(3).  // Retry up to 3 times
+    Build()
+```
+
+#### Backoff Strategies
+
+**Exponential Backoff** (default):
+```go
+client := chehttp.NewBuilder().
+    WithRetries(3).
+    WithRetryBackoff(chehttp.ExponentialBackoff{
+        BaseDelay:  100 * time.Millisecond,
+        Multiplier: 2.0,  // Doubles each retry
+        MaxDelay:   10 * time.Second,
+    }).
+    Build()
+```
+
+**Fixed Backoff**:
+```go
+client := chehttp.NewBuilder().
+    WithRetries(3).
+    WithRetryBackoff(chehttp.FixedBackoff{
+        Delay: 1 * time.Second,  // Same delay for each retry
+    }).
+    Build()
+```
+
+**Linear Backoff**:
+```go
+client := chehttp.NewBuilder().
+    WithRetries(3).
+    WithRetryBackoff(chehttp.LinearBackoff{
+        BaseDelay: 500 * time.Millisecond,  // Increases linearly
+    }).
+    Build()
+```
+
+#### Custom Retryable Status Codes
+
+```go
+client := chehttp.NewBuilder().
+    WithRetries(3).
+    WithRetryableStatusCodes(
+        chehttp.StatusCodeRange{Min: 408, Max: 408}, // Request Timeout
+        chehttp.StatusCodeRange{Min: 429, Max: 429}, // Too Many Requests
+        chehttp.StatusCodeRange{Min: 500, Max: 599}, // Server Errors
+    ).
+    WithNonRetryableStatusCodes(501, 505). // Never retry these
+    Build()
+```
+
+### Context-Aware Methods
+
+Use context-aware methods for request cancellation and deadline management:
+
+```go
+// Create a context with timeout
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+// Use context-aware methods
+resp, err := client.GetWithCtx(ctx, "/users")
+resp, err := client.PostWithCtx(ctx, "/users", chehttp.WithJSONBody(user))
+resp, err := client.PutWithCtx(ctx, "/users/1", chehttp.WithJSONBody(user))
+resp, err := client.PatchWithCtx(ctx, "/users/1", chehttp.WithJSONBody(updates))
+resp, err := client.DeleteWithCtx(ctx, "/users/1")
+```
+
+#### Request Cancellation Example
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+
+// Start request in goroutine
+go func() {
+    resp, err := client.GetWithCtx(ctx, "/long-running-task")
+    if err != nil {
+        log.Printf("Request failed: %v", err)
+    }
+}()
+
+// Cancel after some condition
+time.Sleep(2 * time.Second)
+cancel()  // Cancels the ongoing request
+```
+
+### Response Body Streaming
+
+Access the response body reader directly for streaming large responses:
+
+```go
+resp, err := client.Get("/large-file")
+if err != nil {
+    panic(err)
+}
+
+// Access the body reader for streaming
+reader := resp.BodyReader()
+defer reader.Close()
+
+// Process the stream
+buffer := make([]byte, 1024)
+for {
+    n, err := reader.Read(buffer)
+    if err == io.EOF {
+        break
+    }
+    if err != nil {
+        panic(err)
+    }
+    // Process buffer[:n]
+}
+```
+
+**Note**: When using `BodyReader()`, the body is not automatically read. You have full control over how to consume the stream. The convenience methods (`Body()`, `String()`, `UnmarshalJSON()`) will automatically read the body when called.
+
 ### Response Methods
 
 The Response interface provides convenient methods:
@@ -464,14 +593,30 @@ resp, err := client.Get("/users",
 - `WithErrorHook(hook)` - Adds an error hook (4xx/5xx responses)
 - `WithCompleteHook(hook)` - Adds a complete hook (always called)
 
+**Retry Configuration:**
+- `WithRetries(maxRetries)` - Sets maximum number of retry attempts
+- `WithRetryConfig(config)` - Sets custom retry configuration
+- `WithRetryBackoff(strategy)` - Sets backoff strategy (FixedBackoff, LinearBackoff, ExponentialBackoff)
+- `WithRetryableStatusCodes(ranges...)` - Sets HTTP status codes that trigger retries
+- `WithNonRetryableStatusCodes(codes...)` - Sets HTTP status codes that should never be retried
+
 ### Client Interface
 
+**Standard Methods:**
 - `Get(url, ...opts)` - Performs GET request
 - `Post(url, ...opts)` - Performs POST request
 - `Put(url, ...opts)` - Performs PUT request
 - `Patch(url, ...opts)` - Performs PATCH request
 - `Delete(url, ...opts)` - Performs DELETE request
 - `Do(method, url, ...opts)` - Performs request with custom method
+
+**Context-Aware Methods:**
+- `GetWithCtx(ctx, url, ...opts)` - Performs GET request with context
+- `PostWithCtx(ctx, url, ...opts)` - Performs POST request with context
+- `PutWithCtx(ctx, url, ...opts)` - Performs PUT request with context
+- `PatchWithCtx(ctx, url, ...opts)` - Performs PATCH request with context
+- `DeleteWithCtx(ctx, url, ...opts)` - Performs DELETE request with context
+- `DoWithCtx(ctx, method, url, ...opts)` - Performs request with custom method and context
 
 ### Request Options
 
@@ -486,7 +631,8 @@ resp, err := client.Get("/users",
 ### Response Interface
 
 - `StatusCode()` - Returns HTTP status code
-- `Body()` - Returns raw body bytes
+- `Body()` - Returns raw body bytes (reads and caches if not already read)
+- `BodyReader()` - Returns underlying response body reader for streaming
 - `String()` - Returns body as string
 - `Headers()` - Returns response headers
 - `UnmarshalJSON(v)` - Unmarshals body to v
@@ -498,7 +644,8 @@ resp, err := client.Get("/users",
 - Connection pooling is enabled by default
 - Use `WithMaxIdleConns` and `WithMaxIdleConnsPerHost` for high-throughput scenarios
 - The base URL is concatenated on each request - consider caching if performance critical
-- Response bodies are fully read into memory - be cautious with large responses
+- Response bodies are lazily read - use `BodyReader()` for streaming large responses
+- Retries are performed synchronously - consider timeout implications with retry configuration
 
 ## Best Practices
 
@@ -508,6 +655,32 @@ resp, err := client.Get("/users",
 4. **Use Auto-Unmarshal**: Use `WithSuccess` and `WithError` for cleaner code
 5. **Base URL**: Use base URL for API clients
 6. **Default Headers**: Set common headers like User-Agent, Authorization as defaults
+7. **Use Context Methods**: Use context-aware methods for better cancellation control
+8. **Configure Retries**: Set up retry configuration for handling transient failures
+9. **Stream Large Responses**: Use `BodyReader()` for large file downloads or streaming data
+
+## Related Packages
+
+The Che library provides several utility packages for Go development:
+
+### Data Structures
+- **[cheset](../cheset)** - Generic HashSet and OrderedSet implementations
+- **[chemap](../chemap)** - Generic Multimap implementation
+- **[chestack](../chestack)** - Generic Stack implementation
+- **[chequeue](../chequeue)** - Generic Queue implementation
+- **[chelinkedlist](../chelinkedlist)** - Generic singly-linked list implementation
+- **[chedoublylinkedlist](../chedoublylinkedlist)** - Generic doubly-linked list implementation
+- **[chebst](../chebst)** - Generic binary search tree implementation
+
+### Algorithms
+- **[cheslice](../cheslice)** - Slice utility functions (Map, Filter, Reduce, etc.)
+- **[chemap](../chemap)** - Map utility functions
+
+### Testing
+- **[chetest](../chetest)** - Testing utilities and assertions
+
+### HTTP
+- **[chehttp](../chehttp)** - Ergonomic HTTP client (this package)
 
 ## License
 

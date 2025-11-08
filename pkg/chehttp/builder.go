@@ -14,6 +14,7 @@ type Builder struct {
 	requestTimeout    time.Duration
 	connectionTimeout time.Duration
 	hooks             *Hooks
+	retryConfig       *RetryConfig
 }
 
 // NewBuilder creates a new HTTP client builder
@@ -173,6 +174,48 @@ func (b *Builder) WithCompleteHook(hook CompleteHook) *Builder {
 	return b
 }
 
+// WithRetryConfig sets the retry configuration
+func (b *Builder) WithRetryConfig(config *RetryConfig) *Builder {
+	b.retryConfig = config
+	return b
+}
+
+// WithRetries enables retries with the specified maximum number of retry attempts
+func (b *Builder) WithRetries(maxRetries int) *Builder {
+	if b.retryConfig == nil {
+		b.retryConfig = DefaultRetryConfig()
+	}
+	b.retryConfig.MaxRetries = maxRetries
+	return b
+}
+
+// WithRetryBackoff sets the backoff strategy for retries
+func (b *Builder) WithRetryBackoff(strategy BackoffStrategy) *Builder {
+	if b.retryConfig == nil {
+		b.retryConfig = DefaultRetryConfig()
+	}
+	b.retryConfig.BackoffStrategy = strategy
+	return b
+}
+
+// WithRetryableStatusCodes sets the HTTP status codes that should trigger retries
+func (b *Builder) WithRetryableStatusCodes(ranges ...StatusCodeRange) *Builder {
+	if b.retryConfig == nil {
+		b.retryConfig = DefaultRetryConfig()
+	}
+	b.retryConfig.RetryableStatusCodes = ranges
+	return b
+}
+
+// WithNonRetryableStatusCodes sets the HTTP status codes that should never be retried
+func (b *Builder) WithNonRetryableStatusCodes(codes ...int) *Builder {
+	if b.retryConfig == nil {
+		b.retryConfig = DefaultRetryConfig()
+	}
+	b.retryConfig.NonRetryableStatusCodes = codes
+	return b
+}
+
 // Build creates the HTTP client
 func (b *Builder) Build() Client {
 	// Configure connection timeout via transport
@@ -196,5 +239,6 @@ func (b *Builder) Build() Client {
 		requestTimeout:    b.requestTimeout,
 		connectionTimeout: b.connectionTimeout,
 		hooks:             b.hooks.Clone(),
+		retryConfig:       b.retryConfig,
 	}
 }
