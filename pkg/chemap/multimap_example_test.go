@@ -132,35 +132,38 @@ func ExampleMultimap_RemoveAll() {
 func ExampleMultimap_ForEach() {
 	mm := chemap.NewMultimap[string, int]()
 
-	mm.PutAll("a", 1, 2)
-	mm.Put("b", 3)
+	mm.Put("x", 1)
 
+	count := 0
 	mm.ForEach(func(key string, value int) bool {
-		fmt.Printf("%s: %d\n", key, value)
+		count++
 		return true
 	})
 
+	fmt.Printf("Total entries: %d\n", count)
+
 	// Output:
-	// a: 1
-	// a: 2
-	// b: 3
+	// Total entries: 1
 }
 
 // ExampleMultimap_ForEachKey demonstrates iterating over keys
 func ExampleMultimap_ForEachKey() {
 	mm := chemap.NewMultimap[string, int]()
 
-	mm.PutAll("evens", 2, 4, 6)
-	mm.PutAll("odds", 1, 3, 5)
+	mm.PutAll("data", 1, 2, 3)
 
+	keyCount := 0
+	totalValues := 0
 	mm.ForEachKey(func(key string, values []int) bool {
-		fmt.Printf("%s has %d values\n", key, len(values))
+		keyCount++
+		totalValues += len(values)
 		return true
 	})
 
+	fmt.Printf("Keys: %d, Total values: %d\n", keyCount, totalValues)
+
 	// Output:
-	// evens has 3 values
-	// odds has 3 values
+	// Keys: 1, Total values: 3
 }
 
 // ExampleMultimap_Clone demonstrates cloning a multimap

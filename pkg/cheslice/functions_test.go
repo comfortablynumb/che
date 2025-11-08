@@ -325,3 +325,300 @@ func TestLen(t *testing.T) {
 		})
 	}
 }
+
+func TestReduce(t *testing.T) {
+	cases := []struct {
+		input    []int
+		initial  int
+		reducer  func(int, int) int
+		expected int
+	}{
+		{
+			[]int{1, 2, 3, 4},
+			0,
+			func(acc int, element int) int { return acc + element },
+			10,
+		},
+		{
+			[]int{1, 2, 3, 4},
+			1,
+			func(acc int, element int) int { return acc * element },
+			24,
+		},
+		{
+			[]int{},
+			100,
+			func(acc int, element int) int { return acc + element },
+			100,
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestReduce_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Reduce(c.input, c.initial, c.reducer)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestGroupBy(t *testing.T) {
+	input := []int{1, 2, 3, 4, 5, 6}
+	keyFunc := func(n int) string {
+		if n%2 == 0 {
+			return "even"
+		}
+		return "odd"
+	}
+
+	result := cheslice.GroupBy(input, keyFunc)
+
+	chetest.RequireEqual(t, len(result), 2)
+	chetest.RequireEqual(t, result["odd"], []int{1, 3, 5})
+	chetest.RequireEqual(t, result["even"], []int{2, 4, 6})
+}
+
+func TestPartition(t *testing.T) {
+	input := []int{1, 2, 3, 4, 5, 6}
+	predicate := func(n int) bool { return n%2 == 0 }
+
+	evens, odds := cheslice.Partition(input, predicate)
+
+	chetest.RequireEqual(t, evens, []int{2, 4, 6})
+	chetest.RequireEqual(t, odds, []int{1, 3, 5})
+}
+
+func TestFlatten(t *testing.T) {
+	cases := []struct {
+		input    [][]int
+		expected []int
+	}{
+		{[][]int{{1, 2}, {3, 4}, {5, 6}}, []int{1, 2, 3, 4, 5, 6}},
+		{[][]int{{1}, {2}, {3}}, []int{1, 2, 3}},
+		{[][]int{}, []int{}},
+		{[][]int{{}}, []int{}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestFlatten_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Flatten(c.input)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestZip(t *testing.T) {
+	slice1 := []int{1, 2, 3}
+	slice2 := []string{"a", "b", "c"}
+
+	result := cheslice.Zip(slice1, slice2)
+
+	chetest.RequireEqual(t, len(result), 3)
+	chetest.RequireEqual(t, result[0], [2]interface{}{1, "a"})
+	chetest.RequireEqual(t, result[1], [2]interface{}{2, "b"})
+	chetest.RequireEqual(t, result[2], [2]interface{}{3, "c"})
+}
+
+func TestZip_DifferentLengths(t *testing.T) {
+	slice1 := []int{1, 2, 3, 4, 5}
+	slice2 := []string{"a", "b"}
+
+	result := cheslice.Zip(slice1, slice2)
+
+	chetest.RequireEqual(t, len(result), 2)
+	chetest.RequireEqual(t, result[0], [2]interface{}{1, "a"})
+	chetest.RequireEqual(t, result[1], [2]interface{}{2, "b"})
+}
+
+func TestTake(t *testing.T) {
+	cases := []struct {
+		input    []int
+		n        int
+		expected []int
+	}{
+		{[]int{1, 2, 3, 4, 5}, 3, []int{1, 2, 3}},
+		{[]int{1, 2, 3}, 5, []int{1, 2, 3}},
+		{[]int{1, 2, 3}, 0, []int{}},
+		{[]int{1, 2, 3}, -1, []int{}},
+		{[]int{}, 5, []int{}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestTake_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Take(c.input, c.n)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestDrop(t *testing.T) {
+	cases := []struct {
+		input    []int
+		n        int
+		expected []int
+	}{
+		{[]int{1, 2, 3, 4, 5}, 2, []int{3, 4, 5}},
+		{[]int{1, 2, 3}, 5, []int{}},
+		{[]int{1, 2, 3}, 0, []int{1, 2, 3}},
+		{[]int{1, 2, 3}, -1, []int{1, 2, 3}},
+		{[]int{}, 5, []int{}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestDrop_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Drop(c.input, c.n)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestTakeWhile(t *testing.T) {
+	input := []int{1, 2, 3, 4, 5, 6}
+	predicate := func(n int) bool { return n < 4 }
+
+	result := cheslice.TakeWhile(input, predicate)
+
+	chetest.RequireEqual(t, result, []int{1, 2, 3})
+}
+
+func TestDropWhile(t *testing.T) {
+	input := []int{1, 2, 3, 4, 5, 6}
+	predicate := func(n int) bool { return n < 4 }
+
+	result := cheslice.DropWhile(input, predicate)
+
+	chetest.RequireEqual(t, result, []int{4, 5, 6})
+}
+
+func TestAny(t *testing.T) {
+	cases := []struct {
+		input     []int
+		predicate func(int) bool
+		expected  bool
+	}{
+		{[]int{1, 2, 3, 4, 5}, func(n int) bool { return n > 3 }, true},
+		{[]int{1, 2, 3}, func(n int) bool { return n > 5 }, false},
+		{[]int{}, func(n int) bool { return true }, false},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestAny_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Any(c.input, c.predicate)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestAll(t *testing.T) {
+	cases := []struct {
+		input     []int
+		predicate func(int) bool
+		expected  bool
+	}{
+		{[]int{2, 4, 6, 8}, func(n int) bool { return n%2 == 0 }, true},
+		{[]int{2, 3, 4, 6}, func(n int) bool { return n%2 == 0 }, false},
+		{[]int{}, func(n int) bool { return false }, true},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestAll_Case-%d", i), func(t *testing.T) {
+			result := cheslice.All(c.input, c.predicate)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestNone(t *testing.T) {
+	cases := []struct {
+		input     []int
+		predicate func(int) bool
+		expected  bool
+	}{
+		{[]int{1, 3, 5, 7}, func(n int) bool { return n%2 == 0 }, true},
+		{[]int{1, 2, 3, 5}, func(n int) bool { return n%2 == 0 }, false},
+		{[]int{}, func(n int) bool { return true }, true},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestNone_Case-%d", i), func(t *testing.T) {
+			result := cheslice.None(c.input, c.predicate)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestReverse(t *testing.T) {
+	cases := []struct {
+		input    []int
+		expected []int
+	}{
+		{[]int{1, 2, 3, 4, 5}, []int{5, 4, 3, 2, 1}},
+		{[]int{1}, []int{1}},
+		{[]int{}, []int{}},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestReverse_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Reverse(c.input)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
+
+func TestFind(t *testing.T) {
+	input := []int{1, 2, 3, 4, 5}
+	predicate := func(n int) bool { return n > 3 }
+
+	result, found := cheslice.Find(input, predicate)
+
+	chetest.RequireEqual(t, found, true)
+	chetest.RequireEqual(t, result, 4)
+}
+
+func TestFind_NotFound(t *testing.T) {
+	input := []int{1, 2, 3}
+	predicate := func(n int) bool { return n > 10 }
+
+	result, found := cheslice.Find(input, predicate)
+
+	chetest.RequireEqual(t, found, false)
+	chetest.RequireEqual(t, result, 0)
+}
+
+func TestFindIndex(t *testing.T) {
+	input := []int{1, 2, 3, 4, 5}
+	predicate := func(n int) bool { return n > 3 }
+
+	index, found := cheslice.FindIndex(input, predicate)
+
+	chetest.RequireEqual(t, found, true)
+	chetest.RequireEqual(t, index, 3)
+}
+
+func TestFindIndex_NotFound(t *testing.T) {
+	input := []int{1, 2, 3}
+	predicate := func(n int) bool { return n > 10 }
+
+	index, found := cheslice.FindIndex(input, predicate)
+
+	chetest.RequireEqual(t, found, false)
+	chetest.RequireEqual(t, index, -1)
+}
+
+func TestCount(t *testing.T) {
+	cases := []struct {
+		input     []int
+		predicate func(int) bool
+		expected  int
+	}{
+		{[]int{1, 2, 3, 4, 5, 6}, func(n int) bool { return n%2 == 0 }, 3},
+		{[]int{1, 3, 5}, func(n int) bool { return n%2 == 0 }, 0},
+		{[]int{}, func(n int) bool { return true }, 0},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("TestCount_Case-%d", i), func(t *testing.T) {
+			result := cheslice.Count(c.input, c.predicate)
+			chetest.RequireEqual(t, result, c.expected)
+		})
+	}
+}
