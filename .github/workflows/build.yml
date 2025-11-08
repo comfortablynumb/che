@@ -1,4 +1,8 @@
-on: [push, pull_request]
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
 name: build
 permissions:
   contents: read
