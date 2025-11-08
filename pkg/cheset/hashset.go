@@ -1,3 +1,37 @@
+// Package cheset provides a generic HashSet implementation for Go.
+//
+// HashSet is a collection that contains no duplicate elements and provides
+// O(1) average-case performance for basic operations (Add, Remove, Contains).
+// It supports all standard set operations including Union, Intersection,
+// Difference, and Symmetric Difference.
+//
+// # Basic Usage
+//
+//	set := cheset.New[int]()
+//	set.Add(1)
+//	set.Add(2)
+//	fmt.Println(set.Contains(1)) // true
+//	fmt.Println(set.Size())      // 2
+//
+// # Set Operations
+//
+//	set1 := cheset.NewFromSlice([]int{1, 2, 3})
+//	set2 := cheset.NewFromSlice([]int{3, 4, 5})
+//
+//	union := set1.Union(set2)           // {1, 2, 3, 4, 5}
+//	intersection := set1.Intersect(set2) // {3}
+//	difference := set1.Diff(set2)        // {1, 2}
+//
+// # Thread Safety
+//
+// HashSet is not thread-safe. For concurrent use, external synchronization
+// is required (e.g., using sync.RWMutex).
+//
+// # Performance
+//
+// All basic operations (Add, Remove, Contains) have O(1) average-case time
+// complexity. Set operations like Union and Intersection have O(n+m) or
+// O(min(n,m)) complexity depending on the operation.
 package cheset
 
 import "fmt"
