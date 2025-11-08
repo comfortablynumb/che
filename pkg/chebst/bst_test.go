@@ -7,14 +7,14 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	chetest.RequireEqual(t, bst.IsEmpty(), true)
 	chetest.RequireEqual(t, bst.Size(), 0)
 }
 
 func TestInsert(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -27,7 +27,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestInsert_Duplicates(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(5)
@@ -38,7 +38,7 @@ func TestInsert_Duplicates(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -51,13 +51,13 @@ func TestContains(t *testing.T) {
 }
 
 func TestContains_Empty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	chetest.RequireEqual(t, bst.Contains(1), false)
 }
 
 func TestDelete(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -70,7 +70,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDelete_Root(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -83,7 +83,7 @@ func TestDelete_Root(t *testing.T) {
 }
 
 func TestDelete_NotFound(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 
@@ -93,14 +93,14 @@ func TestDelete_NotFound(t *testing.T) {
 }
 
 func TestDelete_Empty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	deleted := bst.Delete(1)
 	chetest.RequireEqual(t, deleted, false)
 }
 
 func TestDelete_LeafNode(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -114,7 +114,7 @@ func TestDelete_LeafNode(t *testing.T) {
 }
 
 func TestDelete_NodeWithOneChild(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -127,7 +127,7 @@ func TestDelete_NodeWithOneChild(t *testing.T) {
 }
 
 func TestDelete_NodeWithTwoChildren(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -142,7 +142,7 @@ func TestDelete_NodeWithTwoChildren(t *testing.T) {
 }
 
 func TestMin(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -155,7 +155,7 @@ func TestMin(t *testing.T) {
 }
 
 func TestMin_Empty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	min, ok := bst.Min()
 	chetest.RequireEqual(t, ok, false)
@@ -163,7 +163,7 @@ func TestMin_Empty(t *testing.T) {
 }
 
 func TestMax(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -176,7 +176,7 @@ func TestMax(t *testing.T) {
 }
 
 func TestMax_Empty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	max, ok := bst.Max()
 	chetest.RequireEqual(t, ok, false)
@@ -184,7 +184,7 @@ func TestMax_Empty(t *testing.T) {
 }
 
 func TestSize(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	chetest.RequireEqual(t, bst.Size(), 0)
 
@@ -199,7 +199,7 @@ func TestSize(t *testing.T) {
 }
 
 func TestIsEmpty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	chetest.RequireEqual(t, bst.IsEmpty(), true)
 
@@ -211,7 +211,7 @@ func TestIsEmpty(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -224,7 +224,7 @@ func TestClear(t *testing.T) {
 }
 
 func TestHeight(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	chetest.RequireEqual(t, bst.Height(), 0)
 
@@ -242,7 +242,7 @@ func TestHeight(t *testing.T) {
 }
 
 func TestInOrder(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -257,7 +257,7 @@ func TestInOrder(t *testing.T) {
 }
 
 func TestInOrder_Empty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	result := bst.InOrder()
 
@@ -265,7 +265,7 @@ func TestInOrder_Empty(t *testing.T) {
 }
 
 func TestPreOrder(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -280,7 +280,7 @@ func TestPreOrder(t *testing.T) {
 }
 
 func TestPreOrder_Empty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	result := bst.PreOrder()
 
@@ -288,7 +288,7 @@ func TestPreOrder_Empty(t *testing.T) {
 }
 
 func TestPostOrder(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -303,7 +303,7 @@ func TestPostOrder(t *testing.T) {
 }
 
 func TestPostOrder_Empty(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	result := bst.PostOrder()
 
@@ -311,7 +311,7 @@ func TestPostOrder_Empty(t *testing.T) {
 }
 
 func TestForEach(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -327,7 +327,7 @@ func TestForEach(t *testing.T) {
 }
 
 func TestForEach_EarlyExit(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -343,7 +343,7 @@ func TestForEach_EarlyExit(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -358,7 +358,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestFind_NotFound(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -372,7 +372,7 @@ func TestFind_NotFound(t *testing.T) {
 }
 
 func TestClone(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	bst.Insert(5)
 	bst.Insert(3)
@@ -392,7 +392,7 @@ func TestClone(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	bst := New[string]()
+	bst := NewOrdered[string]()
 
 	bst.Insert("dog")
 	bst.Insert("cat")
@@ -406,7 +406,7 @@ func TestString(t *testing.T) {
 }
 
 func TestComplexOperations(t *testing.T) {
-	bst := New[int]()
+	bst := NewOrdered[int]()
 
 	// Insert multiple values
 	values := []int{50, 30, 70, 20, 40, 60, 80}

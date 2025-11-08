@@ -152,7 +152,7 @@ dll.RemoveLast() // O(1) removal from both ends
 
 ### Binary Search Tree
 ```go
-bst := chebst.New[int]()
+bst := chebst.NewOrdered[int]()
 bst.Insert(5)
 bst.Insert(3)
 bst.Insert(7)

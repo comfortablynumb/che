@@ -3,24 +3,42 @@ package chebst
 import "golang.org/x/exp/constraints"
 
 // Node represents a single node in a binary search tree
-type Node[T constraints.Ordered] struct {
+type Node[T any] struct {
 	Value T
 	Left  *Node[T]
 	Right *Node[T]
 }
 
+// CompareFunc is a function that compares two values
+// Returns: -1 if a < b, 0 if a == b, 1 if a > b
+type CompareFunc[T any] func(a, b T) int
+
 // BST is a binary search tree implementation
-type BST[T constraints.Ordered] struct {
-	root *Node[T]
-	size int
+type BST[T any] struct {
+	root    *Node[T]
+	size    int
+	compare CompareFunc[T]
 }
 
-// New creates a new empty Binary Search Tree
-func New[T constraints.Ordered]() *BST[T] {
+// New creates a new empty Binary Search Tree with a custom compare function
+func New[T any](compare CompareFunc[T]) *BST[T] {
 	return &BST[T]{
-		root: nil,
-		size: 0,
+		root:    nil,
+		size:    0,
+		compare: compare,
 	}
+}
+
+// NewOrdered creates a new Binary Search Tree for ordered types (int, float, string, etc.)
+func NewOrdered[T constraints.Ordered]() *BST[T] {
+	return New(func(a, b T) int {
+		if a < b {
+			return -1
+		} else if a > b {
+			return 1
+		}
+		return 0
+	})
 }
 
 // Insert adds a value to the tree - O(log n) average, O(n) worst case
@@ -34,12 +52,13 @@ func (bst *BST[T]) insertNode(node *Node[T], value T) *Node[T] {
 		return &Node[T]{Value: value}
 	}
 
-	if value < node.Value {
+	cmp := bst.compare(value, node.Value)
+	if cmp < 0 {
 		node.Left = bst.insertNode(node.Left, value)
-	} else if value > node.Value {
+	} else if cmp > 0 {
 		node.Right = bst.insertNode(node.Right, value)
 	}
-	// If value == node.Value, do nothing (no duplicates)
+	// If cmp == 0, do nothing (no duplicates)
 
 	return node
 }
@@ -61,10 +80,11 @@ func (bst *BST[T]) deleteNode(node *Node[T], value T) (*Node[T], bool) {
 	}
 
 	var deleted bool
+	cmp := bst.compare(value, node.Value)
 
-	if value < node.Value {
+	if cmp < 0 {
 		node.Left, deleted = bst.deleteNode(node.Left, value)
-	} else if value > node.Value {
+	} else if cmp > 0 {
 		node.Right, deleted = bst.deleteNode(node.Right, value)
 	} else {
 		// Node to delete found
@@ -111,9 +131,10 @@ func (bst *BST[T]) search(node *Node[T], value T) bool {
 		return false
 	}
 
-	if value == node.Value {
+	cmp := bst.compare(value, node.Value)
+	if cmp == 0 {
 		return true
-	} else if value < node.Value {
+	} else if cmp < 0 {
 		return bst.search(node.Left, value)
 	} else {
 		return bst.search(node.Right, value)
@@ -283,9 +304,11 @@ func (bst *BST[T]) find(node *Node[T], predicate func(T) bool) (T, bool) {
 
 // Clone creates a deep copy of the tree - O(n)
 func (bst *BST[T]) Clone() *BST[T] {
-	newBst := New[T]()
+	newBst := &BST[T]{
+		compare: bst.compare,
+		size:    bst.size,
+	}
 	newBst.root = bst.cloneNode(bst.root)
-	newBst.size = bst.size
 	return newBst
 }
 
