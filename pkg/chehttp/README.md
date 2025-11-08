@@ -1,10 +1,9 @@
-# chehttp - Ergonomic HTTP Client and Server Utilities
+# chehttp - Ergonomic HTTP Client
 
-A simple, ergonomic HTTP library for Go that makes HTTP clients and servers easier and more convenient.
+A simple, ergonomic HTTP client for Go that makes HTTP requests easier and more convenient.
 
 ## Features
 
-### Client Features
 - **Builder Pattern**: Fluent API for creating HTTP clients
 - **Interface-Based**: Hide implementation details behind clean interfaces
 - **Automatic JSON Marshalling**: Automatically marshal request bodies to JSON
@@ -15,11 +14,8 @@ A simple, ergonomic HTTP library for Go that makes HTTP clients and servers easi
 - **Retry with Backoff**: Configurable retry logic with exponential, linear, or fixed backoff strategies
 - **Context Support**: Context-aware methods for cancellation and deadline management
 - **Streaming Support**: Access response body reader for streaming large responses
-
-### Server Features
-- **Request ID Middleware**: Automatic request ID generation and propagation
-- **Type-Safe Context**: Integration with chectx for type-safe request-scoped values
-- **Customizable**: Configure header names and ID generation strategies
+- **Type-Safe**: Fully generic with Go 1.20+ generics
+- **Zero Dependencies**: Only uses Go standard library
 
 ## Installation
 
@@ -437,166 +433,6 @@ for {
 
 **Note**: When using `BodyReader()`, the body is not automatically read. You have full control over how to consume the stream. The convenience methods (`Body()`, `String()`, `UnmarshalJSON()`) will automatically read the body when called.
 
-## Server Utilities
-
-### Request ID Middleware
-
-The Request ID middleware automatically extracts or generates a unique request ID for each HTTP request and stores it in the context using type-safe context utilities.
-
-#### Basic Usage
-
-```go
-package main
-
-import (
-    "fmt"
-    "net/http"
-
-    "github.com/comfortablynumb/che/pkg/chehttp"
-)
-
-func main() {
-    mux := http.NewServeMux()
-
-    // Add your handlers
-    mux.HandleFunc("/api/users", func(w http.ResponseWriter, r *http.Request) {
-        // Get the request ID from context
-        requestID := chehttp.GetRequestID(r)
-        fmt.Fprintf(w, "Request ID: %s", requestID)
-    })
-
-    // Wrap with Request ID middleware
-    handler := chehttp.RequestIDMiddleware(nil)(mux)
-
-    http.ListenAndServe(":8080", handler)
-}
-```
-
-#### Custom Configuration
-
-```go
-config := &chehttp.RequestIDConfig{
-    HeaderName: "X-Custom-Request-ID",
-    Generator: func() string {
-        return fmt.Sprintf("req-%d", time.Now().UnixNano())
-    },
-}
-
-middleware := chehttp.RequestIDMiddleware(config)
-handler := middleware(mux)
-```
-
-#### Request ID Behavior
-
-1. **Existing ID**: If the incoming request has a request ID header, it will be used
-2. **Generated ID**: If no header is present, a new UUID-style ID is generated
-3. **Context Storage**: The ID is stored in the request context using type-safe keys
-4. **Response Header**: The ID is set in the response header
-5. **Propagation**: The ID is available to all downstream handlers
-
-#### Integration with Logging
-
-```go
-package main
-
-import (
-    "log"
-    "net/http"
-
-    "github.com/comfortablynumb/che/pkg/chehttp"
-)
-
-func loggingMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        requestID := chehttp.GetRequestID(r)
-        log.Printf("[%s] %s %s", requestID, r.Method, r.URL.Path)
-
-        next.ServeHTTP(w, r)
-
-        log.Printf("[%s] Request completed", requestID)
-    })
-}
-
-func main() {
-    mux := http.NewServeMux()
-    mux.HandleFunc("/", handler)
-
-    // Chain middlewares: Request ID first, then logging
-    handler := chehttp.RequestIDMiddleware(nil)(
-        loggingMiddleware(mux),
-    )
-
-    http.ListenAndServe(":8080", handler)
-}
-```
-
-#### Distributed Tracing
-
-```go
-package main
-
-import (
-    "net/http"
-
-    "github.com/comfortablynumb/che/pkg/chehttp"
-    "github.com/comfortablynumb/che/pkg/chectx"
-)
-
-var TraceIDKey = chectx.Key[string]("trace-id")
-
-func traceMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Extract trace ID from header
-        traceID := r.Header.Get("X-Trace-ID")
-        if traceID == "" {
-            // Use request ID as trace ID if not provided
-            traceID = chehttp.GetRequestID(r)
-        }
-
-        // Store in context
-        ctx := chectx.WithValue(r.Context(), TraceIDKey, traceID)
-
-        // Set response header
-        w.Header().Set("X-Trace-ID", traceID)
-
-        next.ServeHTTP(w, r.WithContext(ctx))
-    })
-}
-
-func main() {
-    mux := http.NewServeMux()
-    mux.HandleFunc("/", handler)
-
-    // Chain: Request ID → Trace → Handler
-    handler := chehttp.RequestIDMiddleware(nil)(
-        traceMiddleware(mux),
-    )
-
-    http.ListenAndServe(":8080", handler)
-}
-```
-
-#### Making Client Requests with Request ID
-
-```go
-func handler(w http.ResponseWriter, r *http.Request) {
-    requestID := chehttp.GetRequestID(r)
-
-    // Create HTTP client and propagate request ID
-    client := chehttp.NewBuilder().Build()
-
-    resp, err := client.Get("/api/downstream",
-        chehttp.WithHeader("X-Request-ID", requestID),
-    )
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    fmt.Fprintf(w, "Downstream response: %s", resp.String())
-}
-```
-
 ### Response Methods
 
 The Response interface provides convenient methods:
@@ -844,7 +680,7 @@ The Che library provides several utility packages for Go development:
 - **[chetest](../chetest)** - Testing utilities and assertions
 
 ### HTTP and Context
-- **[chehttp](../chehttp)** - Ergonomic HTTP client and server utilities (this package)
+- **[chehttp](../chehttp)** - Ergonomic HTTP client (this package)
 - **[chectx](../chectx)** - Type-safe context utilities
 - **[chesignal](../chesignal)** - Graceful shutdown utilities
 
