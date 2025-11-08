@@ -39,16 +39,43 @@ This library aims to meet the following requirements:
 - Generic Stack implementation with O(1) amortized operations
 - Simple slice-based implementation
 
+#### `chemap` - Map Data Structures
+- **Multimap** - One-to-many key-value relationships with O(1) operations
+
+#### `chelinkedlist` - LinkedList
+- Generic singly linked list with O(1) prepend/append
+- Iterator support and common list operations
+
+#### `chedoublylinkedlist` - DoublyLinkedList
+- Generic doubly linked list with O(1) prepend/append/remove
+- Bidirectional traversal support
+
+#### `chebst` - Binary Search Tree
+- Generic BST with O(log n) average operations
+- In-order, pre-order, post-order traversals
+- Min, max, height operations
+
 ### Utilities
 
 #### `cheslice` - Slice Functions
+**Basic Operations:**
 - Union, Diff, Intersect, Unique
 - Map, Filter, ForEach
-- Chunk, Fill, and more
+- Chunk, Fill, Flatten
+
+**Advanced Functions:**
+- Reduce, GroupBy, Partition
+- Take, Drop, TakeWhile, DropWhile
+- Any, All, None
+- Reverse, Find, FindIndex, Count
+- Zip (combine two slices)
 
 #### `chemap` - Map Functions
-- Keys extraction
-- More utilities coming soon
+- Keys, Values extraction
+- Invert (swap keys and values)
+- Filter, MapValues (transform values)
+- Merge (combine maps)
+- Pick, Omit (select/exclude keys)
 
 #### `chetest` - Testing Helpers
 - RequireEqual with custom messages
@@ -56,10 +83,12 @@ This library aims to meet the following requirements:
 
 ## Features Status
 
-- [x] Slice functions: Unique, Diff, Intersect, Map, Filter, etc.
-- [x] Map functions: Keys extraction
-- [x] Data structures: HashSet, OrderedSet, Queue, Stack
-- [ ] More data structures: Multimap, LRU Cache, Trie, etc.
+- [x] Slice functions: Unique, Diff, Intersect, Map, Filter, Reduce, GroupBy, Partition, etc.
+- [x] Map functions: Keys, Values, Invert, Filter, MapValues, Merge, Pick, Omit
+- [x] Data structures: HashSet, OrderedSet, Queue, Stack, Multimap
+- [x] Linked data structures: LinkedList, DoublyLinkedList
+- [x] Tree structures: Binary Search Tree
+- [ ] More data structures: LRU Cache, Trie, AVL Tree, etc.
 - [ ] File handling functions
 - [ ] Networking functions
 
@@ -95,6 +124,66 @@ stack := chestack.New[int]()
 stack.Push(1)
 stack.Push(2)
 value, _ := stack.Pop() // 2 (LIFO)
+```
+
+### Multimap
+```go
+mm := chemap.NewMultimap[string, int]()
+mm.Put("key", 1)
+mm.Put("key", 2)
+values := mm.Get("key") // [1, 2]
+```
+
+### LinkedList
+```go
+ll := chelinkedlist.New[int]()
+ll.Append(1)
+ll.Append(2)
+ll.Prepend(0) // [0, 1, 2]
+```
+
+### DoublyLinkedList
+```go
+dll := chedoublylinkedlist.New[int]()
+dll.Append(1)
+dll.Append(2)
+dll.RemoveLast() // O(1) removal from both ends
+```
+
+### Binary Search Tree
+```go
+bst := chebst.NewInt()
+bst.Insert(5)
+bst.Insert(3)
+bst.Insert(7)
+sorted := bst.InOrder() // [3, 5, 7]
+```
+
+### Slice Algorithms
+```go
+// Reduce
+sum := cheslice.Reduce([]int{1, 2, 3}, 0, func(acc, n int) int { return acc + n }) // 6
+
+// GroupBy
+groups := cheslice.GroupBy([]int{1, 2, 3, 4}, func(n int) string {
+    if n%2 == 0 { return "even" } else { return "odd" }
+}) // map[even:[2,4] odd:[1,3]]
+
+// Partition
+evens, odds := cheslice.Partition([]int{1, 2, 3, 4}, func(n int) bool { return n%2 == 0 })
+```
+
+### Map Algorithms
+```go
+// Values
+m := map[string]int{"a": 1, "b": 2}
+values := chemap.Values(m) // [1, 2]
+
+// Invert
+inverted := chemap.Invert(m) // map[1:"a" 2:"b"]
+
+// MapValues
+doubled := chemap.MapValues(m, func(v int) int { return v * 2 }) // map[a:2 b:4]
 ```
 
 ## Credits

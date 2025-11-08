@@ -215,3 +215,192 @@ func Len[T any](slices ...[]T) int {
 
 	return result
 }
+
+// Reduce reduces a slice to a single value using the given reducer function.
+// The accumulator is initialized with the initial value.
+func Reduce[T any, R any](slice []T, initial R, reducer func(acc R, element T) R) R {
+	acc := initial
+	for _, element := range slice {
+		acc = reducer(acc, element)
+	}
+	return acc
+}
+
+// GroupBy groups slice elements by a key function.
+// Returns a map where each key maps to a slice of elements that produced that key.
+func GroupBy[T any, K comparable](slice []T, keyFunc func(T) K) map[K][]T {
+	result := make(map[K][]T)
+	for _, element := range slice {
+		key := keyFunc(element)
+		result[key] = append(result[key], element)
+	}
+	return result
+}
+
+// Partition splits a slice into two slices based on a predicate.
+// The first slice contains elements for which the predicate returns true,
+// the second contains elements for which it returns false.
+func Partition[T any](slice []T, predicate func(T) bool) ([]T, []T) {
+	truthy := make([]T, 0)
+	falsy := make([]T, 0)
+
+	for _, element := range slice {
+		if predicate(element) {
+			truthy = append(truthy, element)
+		} else {
+			falsy = append(falsy, element)
+		}
+	}
+
+	return truthy, falsy
+}
+
+// Flatten flattens a slice of slices into a single slice.
+func Flatten[T any](slices [][]T) []T {
+	result := make([]T, 0)
+	for _, slice := range slices {
+		result = append(result, slice...)
+	}
+	return result
+}
+
+// Zip combines two slices into a slice of pairs.
+// The resulting slice length is the minimum of the two input slices.
+func Zip[T any, U any](slice1 []T, slice2 []U) [][2]interface{} {
+	minLen := len(slice1)
+	if len(slice2) < minLen {
+		minLen = len(slice2)
+	}
+
+	result := make([][2]interface{}, minLen)
+	for i := 0; i < minLen; i++ {
+		result[i] = [2]interface{}{slice1[i], slice2[i]}
+	}
+	return result
+}
+
+// Take returns the first n elements from the slice.
+// If n is greater than the slice length, returns the entire slice.
+func Take[T any](slice []T, n int) []T {
+	if n <= 0 {
+		return []T{}
+	}
+	if n >= len(slice) {
+		result := make([]T, len(slice))
+		copy(result, slice)
+		return result
+	}
+	result := make([]T, n)
+	copy(result, slice[:n])
+	return result
+}
+
+// Drop returns a slice with the first n elements removed.
+// If n is greater than or equal to the slice length, returns an empty slice.
+func Drop[T any](slice []T, n int) []T {
+	if n <= 0 {
+		result := make([]T, len(slice))
+		copy(result, slice)
+		return result
+	}
+	if n >= len(slice) {
+		return []T{}
+	}
+	result := make([]T, len(slice)-n)
+	copy(result, slice[n:])
+	return result
+}
+
+// TakeWhile returns elements from the slice while the predicate returns true.
+// Stops at the first element for which the predicate returns false.
+func TakeWhile[T any](slice []T, predicate func(T) bool) []T {
+	result := make([]T, 0)
+	for _, element := range slice {
+		if !predicate(element) {
+			break
+		}
+		result = append(result, element)
+	}
+	return result
+}
+
+// DropWhile drops elements from the slice while the predicate returns true.
+// Returns the remaining elements starting from the first element for which the predicate returns false.
+func DropWhile[T any](slice []T, predicate func(T) bool) []T {
+	for i, element := range slice {
+		if !predicate(element) {
+			result := make([]T, len(slice)-i)
+			copy(result, slice[i:])
+			return result
+		}
+	}
+	return []T{}
+}
+
+// Any returns true if the predicate returns true for any element in the slice.
+func Any[T any](slice []T, predicate func(T) bool) bool {
+	for _, element := range slice {
+		if predicate(element) {
+			return true
+		}
+	}
+	return false
+}
+
+// All returns true if the predicate returns true for all elements in the slice.
+func All[T any](slice []T, predicate func(T) bool) bool {
+	for _, element := range slice {
+		if !predicate(element) {
+			return false
+		}
+	}
+	return true
+}
+
+// None returns true if the predicate returns false for all elements in the slice.
+func None[T any](slice []T, predicate func(T) bool) bool {
+	return !Any(slice, predicate)
+}
+
+// Reverse returns a new slice with elements in reverse order.
+func Reverse[T any](slice []T) []T {
+	result := make([]T, len(slice))
+	for i, element := range slice {
+		result[len(slice)-1-i] = element
+	}
+	return result
+}
+
+// Find returns the first element for which the predicate returns true.
+// Returns the element and true if found, or zero value and false otherwise.
+func Find[T any](slice []T, predicate func(T) bool) (T, bool) {
+	for _, element := range slice {
+		if predicate(element) {
+			return element, true
+		}
+	}
+	var zero T
+	return zero, false
+}
+
+// FindIndex returns the index of the first element for which the predicate returns true.
+// Returns the index and true if found, or -1 and false otherwise.
+func FindIndex[T any](slice []T, predicate func(T) bool) (int, bool) {
+	for i, element := range slice {
+		if predicate(element) {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+// Count returns the number of elements for which the predicate returns true.
+func Count[T any](slice []T, predicate func(T) bool) int {
+	count := 0
+	for _, element := range slice {
+		if predicate(element) {
+			count++
+		}
+	}
+	return count
+}
