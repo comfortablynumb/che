@@ -27,6 +27,24 @@ type Client interface {
 
 	// Do performs an HTTP request with the given method
 	Do(method, url string, opts ...RequestOption) (Response, error)
+
+	// GetWithCtx performs an HTTP GET request with context
+	GetWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error)
+
+	// PostWithCtx performs an HTTP POST request with context
+	PostWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error)
+
+	// PutWithCtx performs an HTTP PUT request with context
+	PutWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error)
+
+	// PatchWithCtx performs an HTTP PATCH request with context
+	PatchWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error)
+
+	// DeleteWithCtx performs an HTTP DELETE request with context
+	DeleteWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error)
+
+	// DoWithCtx performs an HTTP request with the given method and context
+	DoWithCtx(ctx context.Context, method, url string, opts ...RequestOption) (Response, error)
 }
 
 // client implements the Client interface
@@ -37,6 +55,7 @@ type client struct {
 	requestTimeout    time.Duration
 	connectionTimeout time.Duration
 	hooks             *Hooks
+	retryConfig       *RetryConfig
 }
 
 // Get performs an HTTP GET request
@@ -66,8 +85,36 @@ func (c *client) Delete(url string, opts ...RequestOption) (Response, error) {
 
 // Do performs an HTTP request with the given method
 func (c *client) Do(method, url string, opts ...RequestOption) (Response, error) {
-	startTime := time.Now()
+	return c.DoWithCtx(context.Background(), method, url, opts...)
+}
 
+// GetWithCtx performs an HTTP GET request with context
+func (c *client) GetWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error) {
+	return c.DoWithCtx(ctx, http.MethodGet, url, opts...)
+}
+
+// PostWithCtx performs an HTTP POST request with context
+func (c *client) PostWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error) {
+	return c.DoWithCtx(ctx, http.MethodPost, url, opts...)
+}
+
+// PutWithCtx performs an HTTP PUT request with context
+func (c *client) PutWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error) {
+	return c.DoWithCtx(ctx, http.MethodPut, url, opts...)
+}
+
+// PatchWithCtx performs an HTTP PATCH request with context
+func (c *client) PatchWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error) {
+	return c.DoWithCtx(ctx, http.MethodPatch, url, opts...)
+}
+
+// DeleteWithCtx performs an HTTP DELETE request with context
+func (c *client) DeleteWithCtx(ctx context.Context, url string, opts ...RequestOption) (Response, error) {
+	return c.DoWithCtx(ctx, http.MethodDelete, url, opts...)
+}
+
+// DoWithCtx performs an HTTP request with the given method and context
+func (c *client) DoWithCtx(ctx context.Context, method, url string, opts ...RequestOption) (Response, error) {
 	// Apply request configuration
 	config := &requestConfig{
 		headers: make(map[string]string),
@@ -83,6 +130,58 @@ func (c *client) Do(method, url string, opts ...RequestOption) (Response, error)
 		opt(config)
 	}
 
+	// Perform request with retries if configured
+	if c.retryConfig != nil && c.retryConfig.MaxRetries > 0 {
+		return c.doRequestWithRetry(ctx, method, url, config)
+	}
+
+	return c.doRequest(ctx, method, url, config)
+}
+
+// doRequestWithRetry performs an HTTP request with retry logic
+func (c *client) doRequestWithRetry(ctx context.Context, method, url string, config *requestConfig) (Response, error) {
+	var lastErr error
+	var lastResp Response
+
+	for attempt := 0; attempt <= c.retryConfig.MaxRetries; attempt++ {
+		// Wait for backoff if not first attempt
+		if attempt > 0 {
+			backoff := c.retryConfig.BackoffStrategy.NextBackoff(attempt - 1)
+			select {
+			case <-time.After(backoff):
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+
+		resp, err := c.doRequest(ctx, method, url, config)
+		if err != nil {
+			lastErr = err
+			// Network errors are always retryable
+			continue
+		}
+
+		// Check if we should retry based on status code
+		if c.retryConfig.shouldRetry(resp.StatusCode(), attempt) {
+			lastResp = resp
+			continue
+		}
+
+		// Success or non-retryable error
+		return resp, nil
+	}
+
+	// All retries exhausted
+	if lastResp != nil {
+		return lastResp, nil
+	}
+	return nil, fmt.Errorf("request failed after %d retries: %w", c.retryConfig.MaxRetries, lastErr)
+}
+
+// doRequest performs a single HTTP request
+func (c *client) doRequest(ctx context.Context, method, url string, config *requestConfig) (Response, error) {
+	startTime := time.Now()
+
 	// Build full URL
 	fullURL := c.buildURL(url)
 
@@ -92,7 +191,7 @@ func (c *client) Do(method, url string, opts ...RequestOption) (Response, error)
 		body = config.body
 	}
 
-	req, err := http.NewRequest(method, fullURL, body)
+	req, err := http.NewRequestWithContext(ctx, method, fullURL, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -131,13 +230,12 @@ func (c *client) Do(method, url string, opts ...RequestOption) (Response, error)
 		timeout = *config.timeout
 	}
 
-	ctx := req.Context()
 	if timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
+		req = req.WithContext(ctx)
 	}
-	req = req.WithContext(ctx)
 
 	// Perform request
 	httpResp, err := c.httpClient.Do(req)
@@ -155,8 +253,12 @@ func (c *client) Do(method, url string, opts ...RequestOption) (Response, error)
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 
+	// Determine if we should read the body immediately
+	// Read body if auto-unmarshal is configured
+	readBody := config.autoUnmarshal
+
 	// Create response
-	resp, err := newResponse(httpResp)
+	resp, err := newResponse(httpResp, readBody)
 	if err != nil {
 		hookCtx.Error = err
 		hookCtx.Duration = time.Since(startTime)
@@ -169,7 +271,7 @@ func (c *client) Do(method, url string, opts ...RequestOption) (Response, error)
 			}
 		}
 
-		return nil, fmt.Errorf("failed to read response: %w", err)
+		return nil, fmt.Errorf("failed to create response: %w", err)
 	}
 
 	// Update hook context with response info
