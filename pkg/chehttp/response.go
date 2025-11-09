@@ -73,7 +73,7 @@ func (r *response) readBody() {
 		r.body = body
 	}
 	r.bodyRead = true
-	r.bodyReader.Close()
+	_ = r.bodyReader.Close()
 }
 
 // Headers returns the response headers
