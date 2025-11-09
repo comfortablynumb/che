@@ -21,37 +21,37 @@ This library aims to meet the following requirements:
 
 ### Data Structures
 
-#### `cheset` - Set Implementations
+#### `cheset` - Set Implementations ([📖 Docs](pkg/cheset/README.md))
 - **HashSet** - Unordered set with O(1) operations
 - **OrderedSet** - Insertion-ordered set with O(1) lookups
 
-#### `chequeue` - Queue (FIFO)
+#### `chequeue` - Queue (FIFO) ([📖 Docs](pkg/chequeue/README.md))
 - Generic Queue implementation with O(1) amortized operations
 - Circular buffer for efficient memory usage
 
-#### `chestack` - Stack (LIFO)
+#### `chestack` - Stack (LIFO) ([📖 Docs](pkg/chestack/README.md))
 - Generic Stack implementation with O(1) amortized operations
 - Simple slice-based implementation
 
-#### `chemap` - Map Data Structures
+#### `chemap` - Map Data Structures ([📖 Docs](pkg/chemap/README.md))
 - **Multimap** - One-to-many key-value relationships with O(1) operations
 
-#### `chelinkedlist` - LinkedList
+#### `chelinkedlist` - LinkedList ([📖 Docs](pkg/chelinkedlist/README.md))
 - Generic singly linked list with O(1) prepend/append
 - Iterator support and common list operations
 
-#### `chedoublylinkedlist` - DoublyLinkedList
+#### `chedoublylinkedlist` - DoublyLinkedList ([📖 Docs](pkg/chedoublylinkedlist/README.md))
 - Generic doubly linked list with O(1) prepend/append/remove
 - Bidirectional traversal support
 
-#### `chebst` - Binary Search Tree
+#### `chebst` - Binary Search Tree ([📖 Docs](pkg/chebst/README.md))
 - Generic BST with O(log n) average operations
 - In-order, pre-order, post-order traversals
 - Min, max, height operations
 
 ### Utilities
 
-#### `cheslice` - Slice Functions
+#### `cheslice` - Slice Functions ([📖 Docs](pkg/cheslice/README.md))
 **Basic Operations:**
 - Union, Diff, Intersect, Unique
 - Map, Filter, ForEach
@@ -64,14 +64,14 @@ This library aims to meet the following requirements:
 - Reverse, Find, FindIndex, Count
 - Zip (combine two slices)
 
-#### `chemap` - Map Functions
+#### `chemap` - Map Functions ([📖 Docs](pkg/chemap/README.md))
 - Keys, Values extraction
 - Invert (swap keys and values)
 - Filter, MapValues (transform values)
 - Merge (combine maps)
 - Pick, Omit (select/exclude keys)
 
-#### `chehttp` - HTTP Client
+#### `chehttp` - HTTP Client ([📖 Docs](pkg/chehttp/README.md))
 - Ergonomic HTTP client with builder pattern
 - Automatic JSON marshalling/unmarshalling for requests and responses
 - Request options for headers, timeouts, body
@@ -82,7 +82,7 @@ This library aims to meet the following requirements:
 - Response body streaming
 - Interface-based design for easy mocking
 
-#### `chestring` - String Utilities
+#### `chestring` - String Utilities ([📖 Docs](pkg/chestring/README.md))
 - Case conversions: ToCamelCase, ToPascalCase, ToSnakeCase, ToKebabCase, ToScreamingSnakeCase
 - Transformations: Capitalize, Uncapitalize, Reverse
 - Validation: IsEmpty, IsBlank, IsNotEmpty, IsNotBlank
@@ -90,7 +90,7 @@ This library aims to meet the following requirements:
 - Search: ContainsAny, ContainsAll
 - Other utilities: Repeat, RemoveWhitespace, DefaultIfEmpty, DefaultIfBlank, SplitAndTrim
 
-#### `cheenv` - Environment Variables
+#### `cheenv` - Environment Variables ([📖 Docs](pkg/cheenv/README.md))
 - Type-safe environment variable access (string, int, int64, float64, bool, duration)
 - Default values and Must* variants for required config
 - List support with custom separators (GetStringList, GetIntList)
@@ -98,32 +98,32 @@ This library aims to meet the following requirements:
 - Batch operations: GetAll, GetWithPrefix
 - Variable management: Set, Unset, Has
 
-#### `chectx` - Context Utilities
+#### `chectx` - Context Utilities ([📖 Docs](pkg/chectx/README.md))
 - Type-safe context key/value pairs using generics
 - Eliminates type assertions and key collisions
 - WithValue, Value, MustValue, GetOrDefault functions
 
-#### `chesignal` - Graceful Shutdown
+#### `chesignal` - Graceful Shutdown ([📖 Docs](pkg/chesignal/README.md))
 - Signal handling utilities for graceful application shutdown
 - Configurable signals and timeout
 - Ordered shutdown function execution
 - Lifecycle callbacks (OnShutdownStart, OnShutdownComplete, OnShutdownTimeout)
 - Context-aware shutdown
 
-#### `chelru` - LRU Cache
+#### `chelru` - LRU Cache ([📖 Docs](pkg/chelru/README.md))
 - Thread-safe Least Recently Used cache
 - O(1) get and put operations
 - Fixed capacity with automatic eviction
 - Generic key-value pairs
 
-#### `cheworker` - Worker Pool
+#### `cheworker` - Worker Pool ([📖 Docs](pkg/cheworker/README.md))
 - Fixed worker pool for concurrent job processing
 - Buffered job queue
 - Graceful shutdown support
 - Error collection and panic recovery
 - Context-aware job execution
 
-#### `chestats` - Statistical Functions
+#### `chestats` - Statistical Functions ([📖 Docs](pkg/chestats/README.md))
 - Mean, Median, Mode
 - Variance and Standard Deviation (population and sample)
 - Percentiles and Quartiles
@@ -131,7 +131,7 @@ This library aims to meet the following requirements:
 - Correlation coefficient
 - Generic support for all numeric types
 
-#### `chefile` - File Utilities
+#### `chefile` - File Utilities ([📖 Docs](pkg/chefile/README.md))
 - Copy and Move files with permission preservation
 - Atomic writes (write to temp, then rename)
 - File existence and type checking
@@ -140,69 +140,69 @@ This library aims to meet the following requirements:
 - YAML read/write (ReadYAML, WriteYAML)
 - CSV read/write (ReadCSV, WriteCSV)
 
-#### `chevalid` - Validators
+#### `chevalid` - Validators ([📖 Docs](pkg/chevalid/README.md))
 - Email, URL, IP address validation
 - UUID validation
 - Luhn algorithm (credit card validation)
 - Alpha, alphanumeric, numeric checks
 - String length and pattern validators
 
-#### `cheoption` - Optional/Result Types
+#### `cheoption` - Optional/Result Types ([📖 Docs](pkg/cheoption/README.md))
 - Optional[T] for nullable values
 - Result[T] for error handling
 - Functional operations: Map, FlatMap, Filter
 - Type-safe with generics
 
-#### `checircuit` - Circuit Breaker
+#### `checircuit` - Circuit Breaker ([📖 Docs](pkg/checircuit/README.md))
 - Three-state circuit breaker (Closed, Open, Half-Open)
 - Configurable failure threshold and timeout
 - State change callbacks
 - Thread-safe fault tolerance
 
-#### `cheratelimit` - Rate Limiting
+#### `cheratelimit` - Rate Limiting ([📖 Docs](pkg/cheratelimit/README.md))
 - Token bucket algorithm
 - Per-key rate limiting with cleanup
 - Blocking wait with context support
 - Dynamic rate and burst adjustment
 
-#### `chestrsim` - String Similarity
+#### `chestrsim` - String Similarity ([📖 Docs](pkg/chestrsim/README.md))
 - Levenshtein distance and similarity
 - Hamming distance
 - Jaro-Winkler similarity
 - Cosine and Jaccard similarity
 - Fuzzy matching and scoring
 
-#### `chepqueue` - Priority Queue
+#### `chepqueue` - Priority Queue ([📖 Docs](pkg/chepqueue/README.md))
 - Min-heap and max-heap implementations
 - Generic support for any ordered priority type
 - O(log n) push and pop operations
 - Update priority and remove operations
 
-#### `checolor` - Terminal Colors
+#### `checolor` - Terminal Colors ([📖 Docs](pkg/checolor/README.md))
 - ANSI color codes for terminal output
 - Text styling (bold, underline, italic)
 - Background colors and semantic functions
 - NO_COLOR environment variable support
 
-#### `chepubsub` - Pub/Sub
+#### `chepubsub` - Pub/Sub ([📖 Docs](pkg/chepubsub/README.md))
 - Topic-based message routing
 - Multiple subscribers per topic
 - Asynchronous and synchronous delivery
 - Thread-safe event system
 
-#### `chesemaphore` - Weighted Semaphore
+#### `chesemaphore` - Weighted Semaphore ([📖 Docs](pkg/chesemaphore/README.md))
 - Weighted resource acquisition
 - Blocking and non-blocking operations
 - Context support for cancellation
 - Concurrency control
 
-#### `chedebounce` - Debounce/Throttle
+#### `chedebounce` - Debounce/Throttle ([📖 Docs](pkg/chedebounce/README.md))
 - Function call debouncing
 - Leading and trailing edge throttling
 - Configurable delays and intervals
 - Thread-safe rate limiting
 
-#### `chebatch` - Batch Processing
+#### `chebatch` - Batch Processing ([📖 Docs](pkg/chebatch/README.md))
 - Automatic batching with size/time limits
 - Sequential and parallel processing
 - Context-aware cancellation
