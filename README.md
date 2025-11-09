@@ -144,6 +144,37 @@ This library aims to meet the following requirements:
 - Alpha, alphanumeric, numeric checks
 - String length and pattern validators
 
+#### `cheoption` - Optional/Result Types
+- Optional[T] for nullable values
+- Result[T] for error handling
+- Functional operations: Map, FlatMap, Filter
+- Type-safe with generics
+
+#### `checircuit` - Circuit Breaker
+- Three-state circuit breaker (Closed, Open, Half-Open)
+- Configurable failure threshold and timeout
+- State change callbacks
+- Thread-safe fault tolerance
+
+#### `cheratelimit` - Rate Limiting
+- Token bucket algorithm
+- Per-key rate limiting with cleanup
+- Blocking wait with context support
+- Dynamic rate and burst adjustment
+
+#### `chestrsim` - String Similarity
+- Levenshtein distance and similarity
+- Hamming distance
+- Jaro-Winkler similarity
+- Cosine and Jaccard similarity
+- Fuzzy matching and scoring
+
+#### `chepqueue` - Priority Queue
+- Min-heap and max-heap implementations
+- Generic support for any ordered priority type
+- O(log n) push and pop operations
+- Update priority and remove operations
+
 #### `chetest` - Testing Helpers
 - RequireEqual with custom messages
 - Assertion utilities for tests
@@ -165,7 +196,12 @@ This library aims to meet the following requirements:
 - [x] Statistical functions: Mean, median, variance, percentiles, correlation
 - [x] File utilities: Copy, move, atomic writes, size formatting
 - [x] Validators: Email, URL, IP, UUID, Luhn algorithm
-- [ ] More data structures: Trie, Priority Queue, Bloom Filter, etc.
+- [x] Optional/Result types: Functional error handling with generics
+- [x] Circuit Breaker: Fault tolerance pattern with three states
+- [x] Rate Limiting: Token bucket with per-key support
+- [x] String Similarity: Levenshtein, Jaro-Winkler, fuzzy matching
+- [x] Priority Queue: Min/max heap with generic priorities
+- [ ] More data structures: Trie, Bloom Filter, etc.
 
 ## Quick Examples
 
@@ -377,6 +413,111 @@ config := &chesignal.Config{
 }
 
 err := chesignal.WaitForShutdown(config, shutdownFuncs...)
+```
+
+### Optional/Result Types
+```go
+// Optional
+user := findUser(123) // returns Optional[User]
+if user.IsPresent() {
+    fmt.Println(user.Get().Name)
+}
+
+name := findUser(999).GetOr(User{Name: "Guest"})
+
+// Map and filter
+admin := findUser(1).
+    Map(func(u User) User { u.Role = "admin"; return u }).
+    Filter(func(u User) bool { return u.Active })
+
+// Result
+result := divide(10, 2) // returns Result[float64]
+if result.IsOk() {
+    fmt.Println(result.Unwrap()) // 5.0
+}
+
+value := divide(10, 0).UnwrapOr(0.0) // returns default on error
+
+// Chaining
+result = divide(10, 2).
+    FlatMap(func(x float64) Result[float64] { return divide(x, 2) }).
+    Map(func(x float64) float64 { return x * 10 })
+```
+
+### Circuit Breaker
+```go
+cb := checircuit.New(&checircuit.Config{
+    MaxFailures: 3,
+    Timeout:     30 * time.Second,
+    MaxRequests: 2,
+})
+
+err := cb.Execute(func() error {
+    return callExternalService()
+})
+
+if err == checircuit.ErrCircuitOpen {
+    fmt.Println("Circuit is open, request rejected")
+}
+
+state := cb.State() // StateClosed, StateOpen, or StateHalfOpen
+```
+
+### Rate Limiting
+```go
+// Basic rate limiting
+limiter := cheratelimit.New(10, 5) // 10 req/s, burst of 5
+
+if limiter.Allow() {
+    processRequest()
+}
+
+// Blocking wait
+ctx := context.Background()
+limiter.Wait(ctx) // waits until token available
+
+// Per-key rate limiting
+perKey := cheratelimit.NewPerKey(100, 10)
+if perKey.Allow("user-123") {
+    processUserRequest()
+}
+```
+
+### String Similarity
+```go
+// Levenshtein distance
+dist := chestrsim.Levenshtein("kitten", "sitting") // 3
+sim := chestrsim.LevenshteinSimilarity("hello", "hallo") // 0.80
+
+// Jaro-Winkler (good for names)
+sim = chestrsim.JaroWinkler("martha", "marhta") // 0.961
+
+// Fuzzy matching
+matches := chestrsim.FuzzyMatch("fb", "FooBar") // true
+score := chestrsim.FuzzyScore("abc", "aabbcc") // ~0.67
+
+// Hamming distance
+dist = chestrsim.Hamming("1011101", "1001001") // 2
+```
+
+### Priority Queue
+```go
+// Min-heap (lower priority = dequeued first)
+pq := chepqueue.New[string, int]()
+pq.Push("low", 10)
+pq.Push("high", 1)
+pq.Push("medium", 5)
+
+fmt.Println(pq.Pop()) // "high" (priority 1)
+
+// Max-heap (higher priority = dequeued first)
+maxPQ := chepqueue.NewMax[string, int]()
+maxPQ.Push("task", 10)
+maxPQ.Peek() // view without removing
+
+// Update priority
+equals := func(a, b string) bool { return a == b }
+pq.UpdatePriority("task", 0, equals)
 ```
 
 ## Credits

@@ -77,6 +77,9 @@ func TestPool_ErrorHandling(t *testing.T) {
 
 	pool.Shutdown()
 
+	// Give a moment for error collector to process
+	time.Sleep(10 * time.Millisecond)
+
 	errs := pool.Errors()
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
@@ -112,6 +115,9 @@ func TestPool_OnErrorCallback(t *testing.T) {
 	}
 
 	pool.Shutdown()
+
+	// Give a moment for error collector to process
+	time.Sleep(10 * time.Millisecond)
 
 	mu.Lock()
 	defer mu.Unlock()
