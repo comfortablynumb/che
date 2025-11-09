@@ -1,5 +1,7 @@
 package cheslice
 
+import "golang.org/x/exp/slices"
+
 // Types
 
 type ForEachFunc[T any] func(element T) bool
@@ -11,14 +13,14 @@ type FilterFunc[T any] func(element T) bool
 // Functions
 
 // Union Returns a new slice with all the elements found in the given slices. It preserves repeated elements.
-func Union[T any](slices ...[]T) []T {
-	if len(slices) == 0 {
+func Union[T any](slicesToUnion ...[]T) []T {
+	if len(slicesToUnion) == 0 {
 		return []T{}
 	}
 
-	result := make([]T, 0, Len(slices))
+	result := make([]T, 0, Len(slicesToUnion))
 
-	for _, slice := range slices {
+	for _, slice := range slicesToUnion {
 		result = append(result, slice...)
 	}
 
@@ -72,20 +74,20 @@ func Fill[T any](count uint, value T) []T {
 
 // Diff Returns a new slice with all the elements found in the first slice that are NOT present in the rest of the
 // slices. If no slice is received, it returns an empty slice. If one slice is received, it returns a copy of it.
-func Diff[T comparable](slices ...[]T) []T {
+func Diff[T comparable](slicesToDiff ...[]T) []T {
 	result := make([]T, 0)
 
-	if len(slices) < 1 {
+	if len(slicesToDiff) < 1 {
 		return result
 	}
 
-	if len(slices) == 1 {
-		return append(result, slices[0]...)
+	if len(slicesToDiff) == 1 {
+		return append(result, slicesToDiff[0]...)
 	}
 
 	checkedElements := make(map[T]struct{})
 
-	for _, element := range slices[0] {
+	for _, element := range slicesToDiff[0] {
 		_, found := checkedElements[element]
 
 		if found {
@@ -94,7 +96,7 @@ func Diff[T comparable](slices ...[]T) []T {
 
 		checkedElements[element] = struct{}{}
 
-		if !Exists(element, slices[1:]...) {
+		if !Exists(element, slicesToDiff[1:]...) {
 			result = append(result, element)
 		}
 	}
@@ -162,25 +164,25 @@ func Unique[T comparable](slice []T) []T {
 // Intersect Returns a new slice with the elements that are found in ALL the given slices. If no slice is given, then
 // it returns an empty slice. If only ne slice is given, it rethrns a copy of the same slice (including repeated
 // elements).
-func Intersect[T comparable](slices ...[]T) []T {
+func Intersect[T comparable](slicesToIntersect ...[]T) []T {
 	result := make([]T, 0)
 
-	if len(slices) == 0 {
+	if len(slicesToIntersect) == 0 {
 		return result
 	}
 
-	if len(slices) == 1 {
-		return append(result, slices[0]...)
+	if len(slicesToIntersect) == 1 {
+		return append(result, slicesToIntersect[0]...)
 	}
 
 	m := make(map[T]struct{})
 
-	for _, element := range slices[0] {
+	for _, element := range slicesToIntersect[0] {
 		if _, found := m[element]; found {
 			continue
 		}
 
-		if !Exists(element, slices[1:]...) {
+		if !Exists(element, slicesToIntersect[1:]...) {
 			continue
 		}
 
@@ -193,12 +195,11 @@ func Intersect[T comparable](slices ...[]T) []T {
 }
 
 // Exists Returns true if the given element is present in ANY of the given slices. Returns false otherwise.
-func Exists[T comparable](element T, slices ...[]T) bool {
-	for _, slice := range slices {
-		for _, e := range slice {
-			if e == element {
-				return true
-			}
+// This function uses the standard library's slices.Contains for efficiency.
+func Exists[T comparable](element T, slicesToCheck ...[]T) bool {
+	for _, slice := range slicesToCheck {
+		if slices.Contains(slice, element) {
+			return true
 		}
 	}
 
@@ -206,10 +207,10 @@ func Exists[T comparable](element T, slices ...[]T) bool {
 }
 
 // Len Returns the sum of the lengths of all the given slices.
-func Len[T any](slices ...[]T) int {
+func Len[T any](slicesToMeasure ...[]T) int {
 	result := 0
 
-	for _, slice := range slices {
+	for _, slice := range slicesToMeasure {
 		result += len(slice)
 	}
 
@@ -363,11 +364,10 @@ func None[T any](slice []T, predicate func(T) bool) bool {
 }
 
 // Reverse returns a new slice with elements in reverse order.
+// This function uses the standard library's slices.Clone and slices.Reverse for efficiency.
 func Reverse[T any](slice []T) []T {
-	result := make([]T, len(slice))
-	for i, element := range slice {
-		result[len(slice)-1-i] = element
-	}
+	result := slices.Clone(slice)
+	slices.Reverse(result)
 	return result
 }
 

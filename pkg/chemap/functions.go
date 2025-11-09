@@ -1,27 +1,19 @@
 package chemap
 
+import "golang.org/x/exp/maps"
+
 // Functions
 
 // Keys Returns a slice with the keys found on the given map.
+// This function wraps the standard library's maps.Keys.
 func Keys[K comparable, T any](m map[K]T) []K {
-	result := make([]K, 0, len(m))
-
-	for k := range m {
-		result = append(result, k)
-	}
-
-	return result
+	return maps.Keys(m)
 }
 
 // Values Returns a slice with the values found on the given map.
+// This function wraps the standard library's maps.Values.
 func Values[K comparable, V any](m map[K]V) []V {
-	result := make([]V, 0, len(m))
-
-	for _, v := range m {
-		result = append(result, v)
-	}
-
-	return result
+	return maps.Values(m)
 }
 
 // Invert swaps keys and values in a map. If multiple keys have the same value,
