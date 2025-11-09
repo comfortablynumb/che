@@ -13,16 +13,24 @@ func TestDebouncer_SingleCall(t *testing.T) {
 	defer d.Close()
 
 	called := false
+	var mu sync.Mutex
+
 	d.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 
 	// Should not be called immediately
+	mu.Lock()
 	chetest.RequireEqual(t, called, false)
+	mu.Unlock()
 
 	// Should be called after delay
 	time.Sleep(100 * time.Millisecond)
+	mu.Lock()
 	chetest.RequireEqual(t, called, true)
+	mu.Unlock()
 }
 
 func TestDebouncer_MultipleCalls(t *testing.T) {
@@ -55,13 +63,19 @@ func TestDebouncer_Flush(t *testing.T) {
 	defer d.Close()
 
 	called := false
+	var mu sync.Mutex
+
 	d.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 
 	// Flush should execute immediately
 	d.Flush()
+	mu.Lock()
 	chetest.RequireEqual(t, called, true)
+	mu.Unlock()
 }
 
 func TestDebouncer_Cancel(t *testing.T) {
@@ -69,35 +83,51 @@ func TestDebouncer_Cancel(t *testing.T) {
 	defer d.Close()
 
 	called := false
+	var mu sync.Mutex
+
 	d.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 
 	d.Cancel()
 
 	time.Sleep(100 * time.Millisecond)
+	mu.Lock()
 	chetest.RequireEqual(t, called, false)
+	mu.Unlock()
 }
 
 func TestDebouncer_Close(t *testing.T) {
 	d := NewDebouncer(50 * time.Millisecond)
 
 	called := false
+	var mu sync.Mutex
+
 	d.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 
 	d.Close()
 
 	time.Sleep(100 * time.Millisecond)
+	mu.Lock()
 	chetest.RequireEqual(t, called, false)
+	mu.Unlock()
 
 	// Further calls should be ignored
 	d.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 	time.Sleep(100 * time.Millisecond)
+	mu.Lock()
 	chetest.RequireEqual(t, called, false)
+	mu.Unlock()
 }
 
 func TestThrottler_LeadingEdge(t *testing.T) {
@@ -208,13 +238,19 @@ func TestThrottler_Flush(t *testing.T) {
 	defer th.Close()
 
 	called := false
+	var mu sync.Mutex
+
 	th.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 
 	// Flush should execute immediately
 	th.Flush()
+	mu.Lock()
 	chetest.RequireEqual(t, called, true)
+	mu.Unlock()
 }
 
 func TestThrottler_Cancel(t *testing.T) {
@@ -222,35 +258,51 @@ func TestThrottler_Cancel(t *testing.T) {
 	defer th.Close()
 
 	called := false
+	var mu sync.Mutex
+
 	th.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 
 	th.Cancel()
 
 	time.Sleep(150 * time.Millisecond)
+	mu.Lock()
 	chetest.RequireEqual(t, called, false)
+	mu.Unlock()
 }
 
 func TestThrottler_Close(t *testing.T) {
 	th := NewThrottler(100*time.Millisecond, WithTrailing())
 
 	called := false
+	var mu sync.Mutex
+
 	th.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 
 	th.Close()
 
 	time.Sleep(150 * time.Millisecond)
+	mu.Lock()
 	chetest.RequireEqual(t, called, false)
+	mu.Unlock()
 
 	// Further calls should be ignored
 	th.Call(func() {
+		mu.Lock()
 		called = true
+		mu.Unlock()
 	})
 	time.Sleep(150 * time.Millisecond)
+	mu.Lock()
 	chetest.RequireEqual(t, called, false)
+	mu.Unlock()
 }
 
 func TestDebounce_Function(t *testing.T) {

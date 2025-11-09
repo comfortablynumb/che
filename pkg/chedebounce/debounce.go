@@ -43,11 +43,13 @@ func (d *Debouncer) Call(fn func()) {
 
 	d.timer = time.AfterFunc(d.delay, func() {
 		d.mu.Lock()
-		defer d.mu.Unlock()
+		fn := d.fn
+		d.fn = nil
+		closed := d.closed
+		d.mu.Unlock()
 
-		if d.fn != nil && !d.closed {
-			d.fn()
-			d.fn = nil
+		if fn != nil && !closed {
+			fn()
 		}
 	})
 }
@@ -55,16 +57,18 @@ func (d *Debouncer) Call(fn func()) {
 // Flush immediately executes any pending function call and cancels the timer.
 func (d *Debouncer) Flush() {
 	d.mu.Lock()
-	defer d.mu.Unlock()
-
 	if d.timer != nil {
 		d.timer.Stop()
 		d.timer = nil
 	}
 
-	if d.fn != nil && !d.closed {
-		d.fn()
-		d.fn = nil
+	fn := d.fn
+	d.fn = nil
+	closed := d.closed
+	d.mu.Unlock()
+
+	if fn != nil && !closed {
+		fn()
 	}
 }
 
@@ -145,9 +149,9 @@ func NewThrottler(interval time.Duration, opts ...ThrottleOption) *Throttler {
 // Call attempts to call the function, respecting the throttle interval.
 func (t *Throttler) Call(fn func()) {
 	t.mu.Lock()
-	defer t.mu.Unlock()
 
 	if t.closed {
+		t.mu.Unlock()
 		return
 	}
 
@@ -158,6 +162,7 @@ func (t *Throttler) Call(fn func()) {
 	if t.last.IsZero() {
 		if t.leading {
 			t.last = now
+			t.mu.Unlock()
 			fn()
 			return
 		}
@@ -167,6 +172,7 @@ func (t *Throttler) Call(fn func()) {
 			t.pending = fn
 			t.scheduleTrailing()
 		}
+		t.mu.Unlock()
 		return
 	}
 
@@ -174,10 +180,12 @@ func (t *Throttler) Call(fn func()) {
 	if elapsed >= t.interval {
 		if t.leading {
 			t.last = now
+			t.mu.Unlock()
 			fn()
 		} else if t.trailing {
 			t.pending = fn
 			t.scheduleTrailing()
+			t.mu.Unlock()
 		}
 		return
 	}
@@ -189,6 +197,7 @@ func (t *Throttler) Call(fn func()) {
 			t.scheduleTrailing()
 		}
 	}
+	t.mu.Unlock()
 }
 
 func (t *Throttler) scheduleTrailing() {
@@ -199,13 +208,16 @@ func (t *Throttler) scheduleTrailing() {
 	remaining := t.interval - time.Since(t.last)
 	t.timer = time.AfterFunc(remaining, func() {
 		t.mu.Lock()
-		defer t.mu.Unlock()
-
-		if t.pending != nil && !t.closed {
+		fn := t.pending
+		t.pending = nil
+		t.timer = nil
+		closed := t.closed
+		if fn != nil && !closed {
 			t.last = time.Now()
-			fn := t.pending
-			t.pending = nil
-			t.timer = nil
+		}
+		t.mu.Unlock()
+
+		if fn != nil && !closed {
 			fn()
 		}
 	})
@@ -214,17 +226,21 @@ func (t *Throttler) scheduleTrailing() {
 // Flush immediately executes any pending trailing call.
 func (t *Throttler) Flush() {
 	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	if t.timer != nil {
 		t.timer.Stop()
 		t.timer = nil
 	}
 
-	if t.pending != nil && !t.closed {
-		t.pending()
-		t.pending = nil
+	fn := t.pending
+	t.pending = nil
+	closed := t.closed
+	if fn != nil && !closed {
 		t.last = time.Now()
+	}
+	t.mu.Unlock()
+
+	if fn != nil && !closed {
+		fn()
 	}
 }
 
