@@ -277,7 +277,7 @@ func ExampleStack_expressionEvaluation() {
 			default:
 				// Parse number
 				var num int
-				fmt.Sscanf(token, "%d", &num)
+				_, _ = fmt.Sscanf(token, "%d", &num)
 				stack.Push(num)
 			}
 		}
