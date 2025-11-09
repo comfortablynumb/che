@@ -178,6 +178,36 @@ This library aims to meet the following requirements:
 - O(log n) push and pop operations
 - Update priority and remove operations
 
+#### `checolor` - Terminal Colors
+- ANSI color codes for terminal output
+- Text styling (bold, underline, italic)
+- Background colors and semantic functions
+- NO_COLOR environment variable support
+
+#### `chepubsub` - Pub/Sub
+- Topic-based message routing
+- Multiple subscribers per topic
+- Asynchronous and synchronous delivery
+- Thread-safe event system
+
+#### `chesemaphore` - Weighted Semaphore
+- Weighted resource acquisition
+- Blocking and non-blocking operations
+- Context support for cancellation
+- Concurrency control
+
+#### `chedebounce` - Debounce/Throttle
+- Function call debouncing
+- Leading and trailing edge throttling
+- Configurable delays and intervals
+- Thread-safe rate limiting
+
+#### `chebatch` - Batch Processing
+- Automatic batching with size/time limits
+- Sequential and parallel processing
+- Context-aware cancellation
+- Generic batch utilities
+
 #### `chetest` - Testing Helpers
 - RequireEqual with custom messages
 - Assertion utilities for tests
@@ -204,6 +234,11 @@ This library aims to meet the following requirements:
 - [x] Rate Limiting: Token bucket with per-key support
 - [x] String Similarity: Levenshtein, Jaro-Winkler, fuzzy matching
 - [x] Priority Queue: Min/max heap with generic priorities
+- [x] Terminal Colors: ANSI codes with semantic functions and NO_COLOR support
+- [x] Pub/Sub System: Topic-based messaging with async/sync delivery
+- [x] Weighted Semaphore: Resource limiting with context cancellation
+- [x] Debounce/Throttle: Rate-limited function calls with leading/trailing edges
+- [x] Batch Processing: Automatic batching with size/time triggers
 - [ ] More data structures: Trie, Bloom Filter, etc.
 
 ## Quick Examples
