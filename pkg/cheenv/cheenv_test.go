@@ -10,8 +10,8 @@ import (
 
 func TestGet(t *testing.T) {
 	key := "TEST_STRING"
-	os.Setenv(key, "hello")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "hello")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, Get(key, "default"), "hello")
 	chetest.RequireEqual(t, Get("NON_EXISTENT", "default"), "default")
@@ -19,8 +19,8 @@ func TestGet(t *testing.T) {
 
 func TestMustGet(t *testing.T) {
 	key := "TEST_MUST_STRING"
-	os.Setenv(key, "hello")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "hello")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, MustGet(key), "hello")
 }
@@ -36,20 +36,20 @@ func TestMustGet_Panic(t *testing.T) {
 
 func TestGetInt(t *testing.T) {
 	key := "TEST_INT"
-	os.Setenv(key, "42")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "42")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, GetInt(key, 10), 42)
 	chetest.RequireEqual(t, GetInt("NON_EXISTENT", 10), 10)
 
-	os.Setenv(key, "invalid")
+	_ = os.Setenv(key, "invalid")
 	chetest.RequireEqual(t, GetInt(key, 10), 10)
 }
 
 func TestMustGetInt(t *testing.T) {
 	key := "TEST_MUST_INT"
-	os.Setenv(key, "42")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "42")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, MustGetInt(key), 42)
 }
@@ -65,8 +65,8 @@ func TestMustGetInt_Panic(t *testing.T) {
 
 func TestMustGetInt_PanicOnInvalidValue(t *testing.T) {
 	key := "TEST_INVALID_INT"
-	os.Setenv(key, "not_a_number")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "not_a_number")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	defer func() {
 		r := recover()
@@ -78,8 +78,8 @@ func TestMustGetInt_PanicOnInvalidValue(t *testing.T) {
 
 func TestGetInt64(t *testing.T) {
 	key := "TEST_INT64"
-	os.Setenv(key, "9223372036854775807")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "9223372036854775807")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, GetInt64(key, 10), int64(9223372036854775807))
 	chetest.RequireEqual(t, GetInt64("NON_EXISTENT", 10), int64(10))
@@ -87,8 +87,8 @@ func TestGetInt64(t *testing.T) {
 
 func TestGetFloat(t *testing.T) {
 	key := "TEST_FLOAT"
-	os.Setenv(key, "3.14159")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "3.14159")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, GetFloat(key, 0.0), 3.14159)
 	chetest.RequireEqual(t, GetFloat("NON_EXISTENT", 1.5), 1.5)
@@ -121,26 +121,26 @@ func TestGetBool(t *testing.T) {
 
 	key := "TEST_BOOL"
 	for _, tt := range tests {
-		os.Setenv(key, tt.value)
+		_ = os.Setenv(key, tt.value)
 		result := GetBool(key, false)
 		chetest.RequireEqual(t, result, tt.expected)
 	}
-	os.Unsetenv(key)
+	_ = os.Unsetenv(key)
 
 	// Test default value
 	chetest.RequireEqual(t, GetBool("NON_EXISTENT", true), true)
 	chetest.RequireEqual(t, GetBool("NON_EXISTENT", false), false)
 
 	// Test invalid value returns default
-	os.Setenv(key, "invalid")
+	_ = os.Setenv(key, "invalid")
 	chetest.RequireEqual(t, GetBool(key, true), true)
-	os.Unsetenv(key)
+	_ = os.Unsetenv(key)
 }
 
 func TestMustGetBool(t *testing.T) {
 	key := "TEST_MUST_BOOL"
-	os.Setenv(key, "true")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "true")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, MustGetBool(key), true)
 }
@@ -156,20 +156,20 @@ func TestMustGetBool_Panic(t *testing.T) {
 
 func TestGetDuration(t *testing.T) {
 	key := "TEST_DURATION"
-	os.Setenv(key, "5m")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "5m")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, GetDuration(key, time.Second), 5*time.Minute)
 	chetest.RequireEqual(t, GetDuration("NON_EXISTENT", time.Second), time.Second)
 
-	os.Setenv(key, "invalid")
+	_ = os.Setenv(key, "invalid")
 	chetest.RequireEqual(t, GetDuration(key, time.Second), time.Second)
 }
 
 func TestGetStringList(t *testing.T) {
 	key := "TEST_STRING_LIST"
-	os.Setenv(key, "a,b,c")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "a,b,c")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	result := GetStringList(key, ",", []string{"default"})
 	chetest.RequireEqual(t, len(result), 3)
@@ -178,7 +178,7 @@ func TestGetStringList(t *testing.T) {
 	chetest.RequireEqual(t, result[2], "c")
 
 	// Test with whitespace
-	os.Setenv(key, " a , b , c ")
+	_ = os.Setenv(key, " a , b , c ")
 	result = GetStringList(key, ",", []string{"default"})
 	chetest.RequireEqual(t, len(result), 3)
 	chetest.RequireEqual(t, result[0], "a")
@@ -191,7 +191,7 @@ func TestGetStringList(t *testing.T) {
 	chetest.RequireEqual(t, result[0], "default")
 
 	// Test empty value
-	os.Setenv(key, "")
+	_ = os.Setenv(key, "")
 	result = GetStringList(key, ",", []string{"default"})
 	chetest.RequireEqual(t, len(result), 1)
 	chetest.RequireEqual(t, result[0], "default")
@@ -199,8 +199,8 @@ func TestGetStringList(t *testing.T) {
 
 func TestGetIntList(t *testing.T) {
 	key := "TEST_INT_LIST"
-	os.Setenv(key, "1,2,3")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "1,2,3")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	result := GetIntList(key, ",", []int{0})
 	chetest.RequireEqual(t, len(result), 3)
@@ -209,7 +209,7 @@ func TestGetIntList(t *testing.T) {
 	chetest.RequireEqual(t, result[2], 3)
 
 	// Test with whitespace
-	os.Setenv(key, " 1 , 2 , 3 ")
+	_ = os.Setenv(key, " 1 , 2 , 3 ")
 	result = GetIntList(key, ",", []int{0})
 	chetest.RequireEqual(t, len(result), 3)
 	chetest.RequireEqual(t, result[0], 1)
@@ -220,7 +220,7 @@ func TestGetIntList(t *testing.T) {
 	chetest.RequireEqual(t, result[0], 99)
 
 	// Test default on invalid value
-	os.Setenv(key, "1,invalid,3")
+	_ = os.Setenv(key, "1,invalid,3")
 	result = GetIntList(key, ",", []int{99})
 	chetest.RequireEqual(t, len(result), 1)
 	chetest.RequireEqual(t, result[0], 99)
@@ -229,7 +229,7 @@ func TestGetIntList(t *testing.T) {
 func TestSet(t *testing.T) {
 	key := "TEST_SET"
 	err := Set(key, "value")
-	defer os.Unsetenv(key)
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, err, nil)
 	chetest.RequireEqual(t, os.Getenv(key), "value")
@@ -237,7 +237,7 @@ func TestSet(t *testing.T) {
 
 func TestUnset(t *testing.T) {
 	key := "TEST_UNSET"
-	os.Setenv(key, "value")
+	_ = os.Setenv(key, "value")
 
 	err := Unset(key)
 	chetest.RequireEqual(t, err, nil)
@@ -246,24 +246,24 @@ func TestUnset(t *testing.T) {
 
 func TestHas(t *testing.T) {
 	key := "TEST_HAS"
-	os.Setenv(key, "value")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "value")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	chetest.RequireEqual(t, Has(key), true)
 	chetest.RequireEqual(t, Has("NON_EXISTENT"), false)
 
 	// Test empty value
-	os.Setenv(key, "")
+	_ = os.Setenv(key, "")
 	chetest.RequireEqual(t, Has(key), true)
 }
 
 func TestGetAll(t *testing.T) {
 	key1 := "TEST_GET_ALL_1"
 	key2 := "TEST_GET_ALL_2"
-	os.Setenv(key1, "value1")
-	os.Setenv(key2, "value2")
-	defer os.Unsetenv(key1)
-	defer os.Unsetenv(key2)
+	_ = os.Setenv(key1, "value1")
+	_ = os.Setenv(key2, "value2")
+	defer func() { _ = os.Unsetenv(key1) }()
+	defer func() { _ = os.Unsetenv(key2) }()
 
 	all := GetAll()
 
@@ -276,12 +276,12 @@ func TestGetWithPrefix(t *testing.T) {
 	key2 := "APP_VERSION"
 	key3 := "OTHER_KEY"
 
-	os.Setenv(key1, "myapp")
-	os.Setenv(key2, "1.0.0")
-	os.Setenv(key3, "value")
-	defer os.Unsetenv(key1)
-	defer os.Unsetenv(key2)
-	defer os.Unsetenv(key3)
+	_ = os.Setenv(key1, "myapp")
+	_ = os.Setenv(key2, "1.0.0")
+	_ = os.Setenv(key3, "value")
+	defer func() { _ = os.Unsetenv(key1) }()
+	defer func() { _ = os.Unsetenv(key2) }()
+	defer func() { _ = os.Unsetenv(key3) }()
 
 	result := GetWithPrefix("APP_")
 

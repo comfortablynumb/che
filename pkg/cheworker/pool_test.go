@@ -140,6 +140,9 @@ func TestPool_PanicRecovery(t *testing.T) {
 
 	pool.Shutdown()
 
+	// Give a moment for error collector to process
+	time.Sleep(10 * time.Millisecond)
+
 	errs := pool.Errors()
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error from panic, got %d", len(errs))
