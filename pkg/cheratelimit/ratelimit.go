@@ -191,7 +191,13 @@ func (pkl *PerKeyLimiter) cleanupLoop() {
 		// Remove limiters that haven't been used recently
 		pkl.limiters.Range(func(key, value interface{}) bool {
 			limiter := value.(*Limiter)
-			if time.Since(limiter.lastUpdate) > pkl.cleanup {
+
+			// Lock to safely read lastUpdate
+			limiter.mu.Lock()
+			lastUpdate := limiter.lastUpdate
+			limiter.mu.Unlock()
+
+			if time.Since(lastUpdate) > pkl.cleanup {
 				pkl.limiters.Delete(key)
 			}
 			return true
