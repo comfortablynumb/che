@@ -175,7 +175,9 @@ func TestLimiter_SetBurst(t *testing.T) {
 }
 
 func TestLimiter_Concurrent(t *testing.T) {
-	limiter := New(100, 10)
+	// Use a very low rate (0.01 tokens/sec) to avoid refill during the test
+	// At 0.01 tokens/sec, it takes 100 seconds to get 1 token, so refill won't affect the burst
+	limiter := New(0.01, 10)
 	var wg sync.WaitGroup
 
 	allowed := 0
