@@ -136,6 +136,9 @@ This library aims to meet the following requirements:
 - Atomic writes (write to temp, then rename)
 - File existence and type checking
 - Size formatting (bytes to KB/MB/GB)
+- JSON read/write (ReadJSON, WriteJSON, WriteJSONIndent)
+- YAML read/write (ReadYAML, WriteYAML)
+- CSV read/write (ReadCSV, WriteCSV)
 
 #### `chevalid` - Validators
 - Email, URL, IP address validation
@@ -194,7 +197,7 @@ This library aims to meet the following requirements:
 - [x] LRU Cache: Thread-safe cache with O(1) operations
 - [x] Worker Pool: Concurrent job processing with graceful shutdown
 - [x] Statistical functions: Mean, median, variance, percentiles, correlation
-- [x] File utilities: Copy, move, atomic writes, size formatting
+- [x] File utilities: Copy, move, atomic writes, size formatting, JSON/YAML/CSV operations
 - [x] Validators: Email, URL, IP, UUID, Luhn algorithm
 - [x] Optional/Result types: Functional error handling with generics
 - [x] Circuit Breaker: Fault tolerance pattern with three states

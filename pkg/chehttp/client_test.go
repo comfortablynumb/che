@@ -714,7 +714,7 @@ func TestResponse_BodyReader(t *testing.T) {
 	data, err := io.ReadAll(bodyReader)
 	chetest.RequireEqual(t, err, nil)
 	chetest.RequireEqual(t, string(data), "streaming response")
-	bodyReader.Close()
+	_ = bodyReader.Close()
 }
 
 // Test body reader is not read when not using auto-unmarshal
