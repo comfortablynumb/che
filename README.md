@@ -560,4 +560,5 @@ pq.UpdatePriority("task", 0, equals)
 
 ## Credits
 
+* [Claude](https://claude.ai/): For helping me finish a lot of personal projects in my free time!
 * [gopherize.me](https://gopherize.me/): For the excellent gopher image!
