@@ -272,19 +272,8 @@ func TestPerKeyLimiter_Cleanup(t *testing.T) {
 	// Wait for cleanup
 	time.Sleep(250 * time.Millisecond)
 
-	// Old limiters should be cleaned up
-	cleanedUp := false
-	pkl.limiters.Range(func(key, value interface{}) bool {
-		limiter := value.(*Limiter)
-		if time.Since(limiter.lastUpdate) > pkl.cleanup {
-			cleanedUp = true
-		}
-		return true
-	})
-
-	if !cleanedUp {
-		// This is fine - cleanup might have already removed them
-	}
+	// Old limiters should be cleaned up (or might have already been removed)
+	// This test just verifies the cleanup goroutine runs without panicking
 }
 
 func TestPerKeyLimiter_ConcurrentKeys(t *testing.T) {

@@ -144,7 +144,6 @@ type PerKeyLimiter struct {
 	burst    int
 	limiters sync.Map
 	cleanup  time.Duration
-	mu       sync.Mutex
 }
 
 // NewPerKey creates a new per-key rate limiter.
