@@ -110,6 +110,40 @@ This library aims to meet the following requirements:
 - Lifecycle callbacks (OnShutdownStart, OnShutdownComplete, OnShutdownTimeout)
 - Context-aware shutdown
 
+#### `chelru` - LRU Cache
+- Thread-safe Least Recently Used cache
+- O(1) get and put operations
+- Fixed capacity with automatic eviction
+- Generic key-value pairs
+
+#### `cheworker` - Worker Pool
+- Fixed worker pool for concurrent job processing
+- Buffered job queue
+- Graceful shutdown support
+- Error collection and panic recovery
+- Context-aware job execution
+
+#### `chestats` - Statistical Functions
+- Mean, Median, Mode
+- Variance and Standard Deviation (population and sample)
+- Percentiles and Quartiles
+- Min, Max, Range, Sum
+- Correlation coefficient
+- Generic support for all numeric types
+
+#### `chefile` - File Utilities
+- Copy and Move files with permission preservation
+- Atomic writes (write to temp, then rename)
+- File existence and type checking
+- Size formatting (bytes to KB/MB/GB)
+
+#### `chevalid` - Validators
+- Email, URL, IP address validation
+- UUID validation
+- Luhn algorithm (credit card validation)
+- Alpha, alphanumeric, numeric checks
+- String length and pattern validators
+
 #### `chetest` - Testing Helpers
 - RequireEqual with custom messages
 - Assertion utilities for tests
@@ -126,8 +160,12 @@ This library aims to meet the following requirements:
 - [x] Environment utilities: Type-safe env var access with defaults
 - [x] Context utilities: Type-safe context values with generics
 - [x] Signal utilities: Graceful shutdown handling
-- [ ] More data structures: LRU Cache, Trie, AVL Tree, etc.
-- [ ] File handling functions
+- [x] LRU Cache: Thread-safe cache with O(1) operations
+- [x] Worker Pool: Concurrent job processing with graceful shutdown
+- [x] Statistical functions: Mean, median, variance, percentiles, correlation
+- [x] File utilities: Copy, move, atomic writes, size formatting
+- [x] Validators: Email, URL, IP, UUID, Luhn algorithm
+- [ ] More data structures: Trie, Priority Queue, Bloom Filter, etc.
 
 ## Quick Examples
 
